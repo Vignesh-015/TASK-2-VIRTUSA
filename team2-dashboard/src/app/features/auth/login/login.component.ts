@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { environment } from '../../../../environments/environment';
+import { NotificationService } from '../../../core/services/notification.service';
+import { UserRole } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-login',
@@ -10,36 +11,38 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
-  isLoading = false;
-  errorMessage: string | null = null;
-  infoMessage: string | null = null;
-  sessionExpiredMessage: string | null = null;
-  showPassword = false;
-  useMockApi = environment.useMockApi;
+  public loginForm!: FormGroup;
+  public isLoading: boolean = false;
+  public errorMessage: string | null = null;
+  public infoMessage: string | null = null;
+  public sessionExpiredMessage: string | null = null;
+  public showPassword: boolean = false;
 
-  private returnUrl: string = '/dashboard';
+  private returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
+    public authService: AuthService,
+    private notificationService: NotificationService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    const rememberedEmail = this.authService.getRememberedEmail() || 'admin@employeehub.com';
+
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]]
+      email: [rememberedEmail, [Validators.required, Validators.email]],
+      password: ['admin123', [Validators.required, Validators.minLength(4)]],
+      rememberMe: [!!rememberedEmail]
     });
 
-    // Check for query parameters: registration success, session expiration, returnUrl
     this.route.queryParams.subscribe(params => {
       if (params['registered']) {
-        this.infoMessage = 'Account created. You can sign in now.';
+        this.infoMessage = 'Account created successfully. You can now sign in.';
       }
       if (params['sessionExpired']) {
-        this.sessionExpiredMessage = 'Your session has expired. Please sign in again.';
+        this.sessionExpiredMessage = 'Your session has expired. Please authenticate again.';
       }
       if (params['returnUrl']) {
         this.returnUrl = params['returnUrl'];
@@ -47,20 +50,40 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // Convenience getters for form controls
-  get email() {
-    return this.loginForm.get('email');
-  }
+  get email() { return this.loginForm.get('email'); }
+  get password() { return this.loginForm.get('password'); }
 
-  get password() {
-    return this.loginForm.get('password');
-  }
-
-  togglePasswordVisibility(): void {
+  public togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
 
-  onSubmit(): void {
+  public fillDemoCredentials(role: UserRole): void {
+    const account = this.authService.demoAccounts[role];
+    this.loginForm.patchValue({
+      email: account.user.email,
+      password: account.password
+    });
+    this.errorMessage = null;
+  }
+
+  public quickDemoLogin(role: UserRole): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.authService.loginWithDemoAccount(role).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.notificationService.success(`Signed in as ${res.user.name} (${role})`, 'Welcome back!');
+        this.redirectAfterLogin(res.user.role);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.message || 'Quick login failed.';
+      }
+    });
+  }
+
+  public onSubmit(): void {
     this.errorMessage = null;
 
     if (this.loginForm.invalid) {
@@ -69,17 +92,35 @@ export class LoginComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const { email, password } = this.loginForm.value;
+    const { email, password, rememberMe } = this.loginForm.value;
 
-    this.authService.login({ email, password }).subscribe({
-      next: () => {
+    this.authService.login({ email, password, rememberMe }).subscribe({
+      next: (res) => {
         this.isLoading = false;
-        this.router.navigateByUrl(this.returnUrl);
+        this.notificationService.success(`Welcome back, ${res.user.name}!`, 'Authentication Successful');
+        this.redirectAfterLogin(res.user.role);
       },
       error: (err: Error) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Invalid email or password';
+        this.errorMessage = err.message || 'Invalid email or password.';
       }
     });
+  }
+
+  private redirectAfterLogin(role: UserRole): void {
+    if (this.returnUrl && !this.returnUrl.includes('/forbidden')) {
+      // Check if employee has clearance for returnUrl
+      if (role === 'EMPLOYEE' && (this.returnUrl.includes('/dashboard') || this.returnUrl.includes('/employees') || this.returnUrl.includes('/departments'))) {
+        this.router.navigate(['/profile']);
+        return;
+      }
+      this.router.navigateByUrl(this.returnUrl);
+    } else {
+      if (role === 'EMPLOYEE') {
+        this.router.navigate(['/profile']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+    }
   }
 }

@@ -3,14 +3,17 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * guestGuard prevents logged-in users from seeing the public auth pages (login/register).
- * If the user already has a valid active session, redirect straight to /dashboard.
+ * guestGuard prevents logged-in users from accessing public authentication pages (login/register).
+ * Redirects them to /dashboard or /profile depending on their role.
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.isLoggedIn()) {
+    if (authService.currentRole === 'EMPLOYEE') {
+      return router.createUrlTree(['/profile']);
+    }
     return router.createUrlTree(['/dashboard']);
   }
 

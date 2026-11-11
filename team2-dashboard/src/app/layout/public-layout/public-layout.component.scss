@@ -2,34 +2,67 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
+  background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%);
 }
 
 .public-header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--space-6);
+  padding: 20px 32px;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background-color: #FFFFFF;
 
   &__content {
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
-  }
+    justify-content: space-between;
 
-  &__brand {
-    font-size: var(--text-base);
-    font-weight: 600;
-    color: var(--color-text);
-    letter-spacing: -0.01em;
+    .brand-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .brand-title {
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-primary-navy);
+        letter-spacing: -0.02em;
+
+        .brand-accent {
+          color: var(--color-primary-blue);
+        }
+      }
+    }
+
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #059669;
+      background: #ECFDF5;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid #A7F3D0;
+    }
   }
 }
 
 .public-main {
   flex: 1;
   display: flex;
-  align-items: flex-start; /* top-aligned, not vertically glued to middle */
+  align-items: center;
   justify-content: center;
-  padding: var(--space-7) var(--space-4) var(--space-7) var(--space-4);
+  padding: 40px 16px;
+}
+
+.public-footer {
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  background: #FFFFFF;
 }

@@ -1,0 +1,616 @@
+<div class="employees-page">
+
+  <!-- ── PAGE HEADER ─────────────────────────────────────────────────── -->
+  <header class="page-top-header">
+    <div class="header-left">
+      <h1 class="header-title">Employee Directory</h1>
+      <p class="header-desc">
+        Comprehensive roster of all workforce personnel, department assignments, and job designations.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button *ngIf="authService.hasRole(['ADMIN', 'HR'])"
+              type="button"
+              class="btn btn-primary"
+              (click)="openAddModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Employee
+      </button>
+    </div>
+  </header>
+
+  <!-- ── FILTER & SEARCH TOOLBAR ─────────────────────────────────────── -->
+  <section class="card filter-toolbar">
+    <div class="toolbar-main">
+
+      <!-- Live Search Box -->
+      <div class="search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text"
+               class="form-control filter-input"
+               placeholder="Search by name, email, employee ID, role..."
+               [(ngModel)]="searchKeyword"
+               (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Department Filter Dropdown -->
+      <div class="filter-dropdown">
+        <select class="form-select filter-select"
+                [(ngModel)]="selectedDepartment"
+                (ngModelChange)="onFilterChange()"
+                aria-label="Filter by department">
+          <option value="ALL">All Departments</option>
+          <option *ngFor="let dept of departments" [value]="dept.name">{{ dept.name }}</option>
+        </select>
+      </div>
+
+      <!-- Status Filter Dropdown -->
+      <div class="filter-dropdown">
+        <select class="form-select filter-select"
+                [(ngModel)]="selectedStatus"
+                (ngModelChange)="onFilterChange()"
+                aria-label="Filter by status">
+          <option value="ALL">All Statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="ONBOARDING">Onboarding</option>
+          <option value="ON_LEAVE">On Leave</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+
+      <!-- Sort By Dropdown -->
+      <div class="filter-dropdown">
+        <select class="form-select filter-select"
+                [(ngModel)]="selectedSortBy"
+                (ngModelChange)="onFilterChange()"
+                aria-label="Sort by field">
+          <option value="name">Sort by: Name</option>
+          <option value="joiningDate">Sort by: Joining Date</option>
+          <option value="department">Sort by: Department</option>
+          <option value="employeeId">Sort by: Employee ID</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Right: View Mode Toggle & Clear Filters -->
+    <div class="toolbar-aux">
+      <button *ngIf="searchKeyword || selectedDepartment !== 'ALL' || selectedStatus !== 'ALL'"
+              type="button"
+              class="btn btn-sm btn-ghost"
+              (click)="resetFilters()">
+        Reset Filters
+      </button>
+
+      <div class="view-toggle-group">
+        <button type="button"
+                class="view-toggle-btn"
+                [class.active]="viewMode === 'table'"
+                (click)="viewMode = 'table'"
+                title="Table View">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </button>
+        <button type="button"
+                class="view-toggle-btn"
+                [class.active]="viewMode === 'grid'"
+                (click)="viewMode = 'grid'"
+                title="Grid Cards View">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DIRECTORY CONTENT ───────────────────────────────────────────── -->
+
+  <!-- 1. Table View -->
+  <section *ngIf="viewMode === 'table'" class="directory-table-card card">
+    <div class="table-container">
+      <table class="table" aria-label="Employees Directory Table">
+        <thead>
+          <tr>
+            <th (click)="toggleSort('employeeId')" class="sortable-header">
+              ID
+              <span class="sort-icon" *ngIf="selectedSortBy === 'employeeId'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="toggleSort('name')" class="sortable-header">
+              Employee
+              <span class="sort-icon" *ngIf="selectedSortBy === 'name'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="toggleSort('department')" class="sortable-header">
+              Department
+              <span class="sort-icon" *ngIf="selectedSortBy === 'department'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th>Designation</th>
+            <th (click)="toggleSort('joiningDate')" class="sortable-header">
+              Joining Date
+              <span class="sort-icon" *ngIf="selectedSortBy === 'joiningDate'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Empty State -->
+          <tr *ngIf="employees.length === 0 && !isLoading">
+            <td colspan="7" class="empty-table-cell">
+              <div class="empty-state">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <div class="empty-title">No employees found</div>
+                <p class="empty-desc">No records matched your search or filters.</p>
+                <button type="button" class="btn btn-sm btn-outline" (click)="resetFilters()">Clear Filters</button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Rows -->
+          <tr *ngFor="let emp of employees">
+            <td>
+              <span class="employee-id-pill">{{ emp.employeeId }}</span>
+            </td>
+            <td>
+              <div class="employee-cell">
+                <app-avatar [src]="emp.avatar" [name]="emp.fullName" size="sm"></app-avatar>
+                <div class="employee-cell-meta">
+                  <span class="employee-name" (click)="openDetailsModal(emp)">{{ emp.fullName }}</span>
+                  <span class="employee-email">{{ emp.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="department-pill">{{ emp.department }}</span>
+            </td>
+            <td>
+              <span class="designation-text">{{ emp.designation }}</span>
+            </td>
+            <td>
+              <span class="date-text">{{ emp.joiningDate | date:'mediumDate' }}</span>
+            </td>
+            <td>
+              <app-status-badge [status]="emp.status"></app-status-badge>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-group">
+                <!-- View Details -->
+                <button type="button"
+                        class="btn-action-icon"
+                        (click)="openDetailsModal(emp)"
+                        title="View Full Profile">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+
+                <!-- Edit (Admin & HR) -->
+                <button *ngIf="authService.hasRole(['ADMIN', 'HR'])"
+                        type="button"
+                        class="btn-action-icon"
+                        (click)="openEditModal(emp)"
+                        title="Edit Employee">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+
+                <!-- Delete (Admin Only, disabled for HR with tooltip) -->
+                <button type="button"
+                        class="btn-action-icon btn-action-delete"
+                        [class.disabled-action]="!authService.isAdmin()"
+                        (click)="confirmDelete(emp)"
+                        [title]="authService.isAdmin() ? 'Delete Employee' : 'Deletion restricted to Administrators'">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <app-pagination
+      [total]="totalEmployees"
+      [page]="currentPage"
+      [pageSize]="pageSize"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
+  </section>
+
+  <!-- 2. Grid Cards View -->
+  <section *ngIf="viewMode === 'grid'" class="directory-grid-view">
+    <div class="employee-grid">
+      <div *ngFor="let emp of employees" class="card employee-card">
+        <div class="card-top-accent"></div>
+        <div class="employee-card-body">
+          <div class="card-avatar-row">
+            <app-avatar [src]="emp.avatar" [name]="emp.fullName" size="lg" [showStatus]="true" [status]="emp.status"></app-avatar>
+            <app-status-badge [status]="emp.status"></app-status-badge>
+          </div>
+
+          <div class="card-identity">
+            <h3 class="card-name" (click)="openDetailsModal(emp)">{{ emp.fullName }}</h3>
+            <span class="card-id">{{ emp.employeeId }}</span>
+            <div class="card-designation">{{ emp.designation }}</div>
+            <div class="card-dept">{{ emp.department }}</div>
+          </div>
+
+          <div class="card-details-list">
+            <div class="card-detail-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <span>{{ emp.email }}</span>
+            </div>
+            <div class="card-detail-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>{{ emp.phone }}</span>
+            </div>
+            <div class="card-detail-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Joined {{ emp.joiningDate | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="employee-card-footer">
+          <button type="button" class="btn btn-sm btn-secondary" (click)="openDetailsModal(emp)">
+            View Profile
+          </button>
+          <div class="footer-actions-right">
+            <button *ngIf="authService.hasRole(['ADMIN', 'HR'])"
+                    type="button"
+                    class="btn-icon-sm"
+                    (click)="openEditModal(emp)"
+                    title="Edit Employee">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button *ngIf="authService.isAdmin()"
+                    type="button"
+                    class="btn-icon-sm btn-icon-danger"
+                    (click)="confirmDelete(emp)"
+                    title="Delete Employee">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination for Grid View -->
+    <div class="card grid-pagination-card">
+      <app-pagination
+        [total]="totalEmployees"
+        [page]="currentPage"
+        [pageSize]="pageSize"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
+  </section>
+
+  <!-- ── ADD / EDIT EMPLOYEE MODAL ────────────────────────────────────── -->
+  <app-modal [isOpen]="isFormModalOpen"
+             [title]="isEditing ? 'Edit Employee Record' : 'Add New Employee'"
+             [subtitle]="isEditing ? 'Update personnel information and department details.' : 'Create an employee record and allocate credentials.'"
+             size="lg"
+             (closeDialog)="isFormModalOpen = false">
+
+    <form [formGroup]="employeeForm" (ngSubmit)="saveEmployee()" id="employeeForm">
+      <div class="form-grid-2">
+        <!-- First Name -->
+        <div class="form-group">
+          <label class="form-label" for="firstName">First Name <span class="required">*</span></label>
+          <input id="firstName"
+                 type="text"
+                 class="form-control"
+                 formControlName="firstName"
+                 placeholder="e.g. Liam"
+                 [class.is-invalid]="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched" />
+          <div *ngIf="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched" class="form-error">
+            First name is required.
+          </div>
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group">
+          <label class="form-label" for="lastName">Last Name <span class="required">*</span></label>
+          <input id="lastName"
+                 type="text"
+                 class="form-control"
+                 formControlName="lastName"
+                 placeholder="e.g. O'Connor"
+                 [class.is-invalid]="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched" />
+          <div *ngIf="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched" class="form-error">
+            Last name is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="empEmail">Work Email <span class="required">*</span></label>
+          <input id="empEmail"
+                 type="email"
+                 class="form-control"
+                 formControlName="email"
+                 placeholder="name@employeehub.com"
+                 [class.is-invalid]="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched" />
+          <div *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched" class="form-error">
+            Valid work email is required.
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label class="form-label" for="empPhone">Phone Number <span class="required">*</span></label>
+          <input id="empPhone"
+                 type="text"
+                 class="form-control"
+                 formControlName="phone"
+                 placeholder="+1 (555) 000-0000"
+                 [class.is-invalid]="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched" />
+          <div *ngIf="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched" class="form-error">
+            Phone number is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Department -->
+        <div class="form-group">
+          <label class="form-label" for="empDept">Department <span class="required">*</span></label>
+          <select id="empDept" class="form-select" formControlName="department">
+            <option *ngFor="let d of departments" [value]="d.name">{{ d.name }}</option>
+          </select>
+        </div>
+
+        <!-- Designation -->
+        <div class="form-group">
+          <label class="form-label" for="empDesignation">Designation <span class="required">*</span></label>
+          <input id="empDesignation"
+                 type="text"
+                 class="form-control"
+                 formControlName="designation"
+                 placeholder="e.g. Senior Frontend Architect"
+                 [class.is-invalid]="employeeForm.get('designation')?.invalid && employeeForm.get('designation')?.touched" />
+          <div *ngIf="employeeForm.get('designation')?.invalid && employeeForm.get('designation')?.touched" class="form-error">
+            Designation is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <!-- Joining Date -->
+        <div class="form-group">
+          <label class="form-label" for="empJoinDate">Joining Date <span class="required">*</span></label>
+          <input id="empJoinDate" type="date" class="form-control" formControlName="joiningDate" />
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label class="form-label" for="empStatus">Status <span class="required">*</span></label>
+          <select id="empStatus" class="form-select" formControlName="status">
+            <option value="ACTIVE">Active</option>
+            <option value="ONBOARDING">Onboarding</option>
+            <option value="ON_LEAVE">On Leave</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Employment Type -->
+        <div class="form-group">
+          <label class="form-label" for="empType">Employment Type <span class="required">*</span></label>
+          <select id="empType" class="form-select" formControlName="employmentType">
+            <option value="FULL_TIME">Full-time</option>
+            <option value="PART_TIME">Part-time</option>
+            <option value="CONTRACT">Contract</option>
+            <option value="INTERN">Intern</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Location -->
+        <div class="form-group">
+          <label class="form-label" for="empLocation">Work Location</label>
+          <input id="empLocation" type="text" class="form-control" formControlName="location" placeholder="e.g. New York, NY (Hybrid)" />
+        </div>
+
+        <!-- Manager -->
+        <div class="form-group">
+          <label class="form-label" for="empManager">Reporting Manager</label>
+          <input id="empManager" type="text" class="form-control" formControlName="manager" placeholder="e.g. Alexander Hayes" />
+        </div>
+      </div>
+
+      <!-- Skills (comma separated) -->
+      <div class="form-group">
+        <label class="form-label" for="empSkills">Skills / Competencies (comma separated)</label>
+        <input id="empSkills" type="text" class="form-control" formControlName="skillsString" placeholder="e.g. Angular, TypeScript, Micro-frontends, RxJS" />
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group">
+        <label class="form-label" for="empBio">Bio / Professional Summary</label>
+        <textarea id="empBio" rows="2" class="form-control" formControlName="bio" placeholder="Brief summary of experience and role expectations..."></textarea>
+      </div>
+    </form>
+
+    <div footer>
+      <button type="button" class="btn btn-secondary" (click)="isFormModalOpen = false" [disabled]="isSubmittingForm">
+        Cancel
+      </button>
+      <button type="submit" form="employeeForm" class="btn btn-primary" [disabled]="isSubmittingForm">
+        <span *ngIf="!isSubmittingForm">{{ isEditing ? 'Save Changes' : 'Create Record' }}</span>
+        <span *ngIf="isSubmittingForm">Saving...</span>
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- ── EMPLOYEE DETAILS DOSSIER MODAL ───────────────────────────────── -->
+  <app-modal [isOpen]="isDetailModalOpen"
+             [title]="selectedEmployee?.fullName || 'Employee Dossier'"
+             [subtitle]="selectedEmployee ? selectedEmployee.employeeId + ' &middot; ' + selectedEmployee.department : ''"
+             size="lg"
+             (closeDialog)="isDetailModalOpen = false">
+
+    <div *ngIf="selectedEmployee" class="dossier-view">
+      <!-- Profile Header Summary -->
+      <div class="dossier-header-card">
+        <app-avatar [src]="selectedEmployee.avatar" [name]="selectedEmployee.fullName" size="xl" [showStatus]="true" [status]="selectedEmployee.status"></app-avatar>
+        <div class="dossier-header-info">
+          <div class="dossier-name-row">
+            <h2 class="dossier-name">{{ selectedEmployee.fullName }}</h2>
+            <app-status-badge [status]="selectedEmployee.status"></app-status-badge>
+          </div>
+          <div class="dossier-title">{{ selectedEmployee.designation }}</div>
+          <div class="dossier-dept">{{ selectedEmployee.department }} &bull; {{ selectedEmployee.location }}</div>
+        </div>
+      </div>
+
+      <!-- Dossier Grid -->
+      <div class="dossier-details-grid">
+        <!-- Personal & Contact -->
+        <div class="dossier-section">
+          <h4 class="section-heading">Contact Information</h4>
+          <div class="dossier-row">
+            <span class="d-label">Work Email</span>
+            <span class="d-val email-val">{{ selectedEmployee.email }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Phone</span>
+            <span class="d-val">{{ selectedEmployee.phone }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Office Location</span>
+            <span class="d-val">{{ selectedEmployee.location || 'HQ - Main Campus' }}</span>
+          </div>
+        </div>
+
+        <!-- Employment & Org -->
+        <div class="dossier-section">
+          <h4 class="section-heading">Organizational Role</h4>
+          <div class="dossier-row">
+            <span class="d-label">Employee ID</span>
+            <span class="d-val font-mono">{{ selectedEmployee.employeeId }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Department</span>
+            <span class="d-val">{{ selectedEmployee.department }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Reporting Manager</span>
+            <span class="d-val">{{ selectedEmployee.manager || 'Executive Team' }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Date of Joining</span>
+            <span class="d-val">{{ selectedEmployee.joiningDate | date:'longDate' }}</span>
+          </div>
+          <div class="dossier-row">
+            <span class="d-label">Employment Type</span>
+            <span class="d-val">{{ selectedEmployee.employmentType }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact & Bio -->
+      <div class="dossier-section" *ngIf="selectedEmployee.emergencyContact">
+        <h4 class="section-heading">Emergency Contact</h4>
+        <div class="dossier-row">
+          <span class="d-label">Contact Person</span>
+          <span class="d-val">{{ selectedEmployee.emergencyContact.name }} ({{ selectedEmployee.emergencyContact.relationship }}) &bull; {{ selectedEmployee.emergencyContact.phone }}</span>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="dossier-section" *ngIf="selectedEmployee.skills?.length">
+        <h4 class="section-heading">Skills & Competencies</h4>
+        <div class="skills-tag-cloud">
+          <span *ngFor="let sk of selectedEmployee.skills" class="skill-chip">{{ sk }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div footer>
+      <button type="button" class="btn btn-secondary" (click)="isDetailModalOpen = false">Close</button>
+      <button *ngIf="authService.hasRole(['ADMIN', 'HR']) && selectedEmployee"
+              type="button"
+              class="btn btn-primary"
+              (click)="isDetailModalOpen = false; openEditModal(selectedEmployee)">
+        Edit Record
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- ── DELETE CONFIRMATION MODAL ────────────────────────────────────── -->
+  <app-modal [isOpen]="isDeleteModalOpen"
+             title="Confirm Record Deletion"
+             size="sm"
+             (closeDialog)="isDeleteModalOpen = false">
+
+    <div class="delete-confirmation-dialog">
+      <div class="warning-icon-wrapper">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="warning-content">
+        <h4>Permanently delete employee record?</h4>
+        <p>
+          Are you sure you want to delete <strong>{{ employeeToDelete?.fullName }}</strong> ({{ employeeToDelete?.employeeId }})?
+          This action will immediately remove their personnel dossier and access authorizations.
+        </p>
+      </div>
+    </div>
+
+    <div footer>
+      <button type="button" class="btn btn-secondary" (click)="isDeleteModalOpen = false">Cancel</button>
+      <button type="button" class="btn btn-danger" (click)="executeDelete()">Confirm Delete</button>
+    </div>
+  </app-modal>
+
+</div>
+

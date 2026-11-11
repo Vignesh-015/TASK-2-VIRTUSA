@@ -4,7 +4,7 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * roleGuard checks whether the authenticated user has one of the allowed roles
- * specified on the route configuration (e.g. data: { roles: ['ADMIN'] }).
+ * specified on the route configuration (e.g. data: { roles: ['ADMIN', 'HR'] }).
  * If the user's role does not match, they are redirected to /forbidden.
  */
 export const roleGuard: CanActivateFn = (route) => {
@@ -14,6 +14,11 @@ export const roleGuard: CanActivateFn = (route) => {
   const allowedRoles = (route.data?.['roles'] as string[]) || [];
   const currentUser = authService.currentUser;
 
+  // If no roles specified, grant access
+  if (allowedRoles.length === 0) {
+    return true;
+  }
+
   if (currentUser && allowedRoles.includes(currentUser.role)) {
     return true;
   }
@@ -22,8 +27,8 @@ export const roleGuard: CanActivateFn = (route) => {
 };
 
 /**
- * roleMatchGuard prevents matching (and therefore lazy chunk downloading)
- * for unauthorized users on lazy-loaded modules.
+ * roleMatchGuard prevents route matching and lazy module downloading
+ * when the user doesn't possess the required role clearance.
  */
 export const roleMatchGuard: CanMatchFn = (route: Route, _segments: UrlSegment[]) => {
   const authService = inject(AuthService);
@@ -32,10 +37,14 @@ export const roleMatchGuard: CanMatchFn = (route: Route, _segments: UrlSegment[]
   const allowedRoles = (route.data?.['roles'] as string[]) || [];
   const currentUser = authService.currentUser;
 
+  if (allowedRoles.length === 0) {
+    return true;
+  }
+
   if (currentUser && allowedRoles.includes(currentUser.role)) {
     return true;
   }
 
-  // If role is insufficient or user is not logged in, redirect to forbidden
+  // Redirect to /forbidden
   return router.createUrlTree(['/forbidden']);
 };

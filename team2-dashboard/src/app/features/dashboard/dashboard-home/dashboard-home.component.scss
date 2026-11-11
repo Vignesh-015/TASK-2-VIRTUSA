@@ -1,144 +1,315 @@
-@import '../../../../styles/variables';
-
 .dashboard-page {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* ─── Page Header ────────────────────────────────────────────────────────── */
-.page-header {
+/* ─── WELCOME HEADER ─────────────────────────────────────────────────────── */
+.welcome-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: flex-end;
-  padding-bottom: $space-4;
-  margin-bottom: $space-5;
-  border-bottom: 1px solid $color-border;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFFFFF;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
 
   &__left {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    max-width: 650px;
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-primary-blue);
+      background-color: var(--color-primary-blue-light);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      width: fit-content;
+    }
+
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--color-primary-navy);
+      letter-spacing: -0.02em;
+    }
+
+    .welcome-subtitle {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      line-height: 1.45;
+      margin: 0;
+    }
   }
 
-  &__meta {
+  &__actions {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: $color-text-muted;
-    letter-spacing: 0.02em;
+    gap: 10px;
+    flex-wrap: wrap;
   }
+}
 
-  &__sep {
-    color: $color-text-muted;
+/* ─── STATS GRID ─────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* ─── ANALYTICS ROW ──────────────────────────────────────────────────────── */
+.analytics-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
   }
+}
 
-  &__greeting {
-    color: $color-text-muted;
-    font-weight: 500;
-  }
+.card-title-group {
+  display: flex;
+  flex-direction: column;
 
-  &__title {
-    font-size: 26px;
+  .card-title {
+    font-size: 15px;
     font-weight: 600;
-    line-height: 1.2;
-    color: $color-text;
+    color: var(--color-text-heading);
     margin: 0;
   }
 
-  &__right {
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin: 2px 0 0;
+  }
+}
+
+/* Segmented Bar Chart */
+.segmented-bar-container {
+  margin-bottom: 20px;
+
+  .segmented-bar {
+    height: 12px;
     display: flex;
-    align-items: center;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background-color: var(--color-surface-muted);
+  }
+
+  .bar-segment {
+    height: 100%;
+    transition: width 0.3s ease;
+
+    &:first-child {
+      border-top-left-radius: var(--radius-full);
+      border-bottom-left-radius: var(--radius-full);
+    }
+
+    &:last-child {
+      border-top-right-radius: var(--radius-full);
+      border-bottom-right-radius: var(--radius-full);
+    }
   }
 }
 
-/* ─── Quiet Refresh Button ───────────────────────────────────────────────── */
-.btn-refresh {
-  background: transparent;
-  border: 1px solid transparent;
-  color: $color-accent;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 4px 6px;
-  cursor: pointer;
-  transition: color 150ms ease;
-
-  &:hover:not(:disabled) {
-    color: #1a4180;
-    text-decoration: underline;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: default;
-    text-decoration: none;
-  }
+/* Department Breakdown List */
+.department-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* ─── Plain Inline Error State ───────────────────────────────────────────── */
-.dashboard-error {
+.department-stat-item {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  color: $color-danger;
-  background-color: #FDF4F3;
-  border: 1px solid #F5CECB;
-  border-radius: $radius-sm;
-  padding: $space-3 $space-4;
-  margin-bottom: $space-5;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
 
-  &__text {
-    line-height: 1.4;
+  &:hover {
+    background-color: var(--color-surface-muted);
   }
 
-  .btn-retry {
-    background: none;
-    border: none;
-    color: $color-accent;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: underline;
-    cursor: pointer;
-    margin-left: $space-3;
-    padding: 0;
-    transition: color 150ms ease;
+  .dept-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-    &:hover {
-      color: #1a4180;
+    .dept-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dept-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-main);
+    }
+  }
+
+  .dept-metrics {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .dept-progress-track {
+      width: 100px;
+      height: 6px;
+      background-color: var(--color-surface-muted);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+
+      @media (max-width: 500px) {
+        display: none;
+      }
+    }
+
+    .dept-progress-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+    }
+
+    .dept-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-heading);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    .dept-pct {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      min-width: 35px;
+      text-align: right;
     }
   }
 }
 
-/* ─── Asymmetric Grid (40% / 60%) ────────────────────────────────────────── */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 4fr 6fr;
-  gap: $space-5;
-  align-items: stretch;
+/* Status Breakdown Pills */
+.status-summary-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
 
-  &__left,
-  &__right {
-    min-width: 0; // Prevent flex/grid item overflow
+.status-pill-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .status-pill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .status-pill-count {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-heading);
+    }
+  }
+
+  .status-pill-meter {
+    height: 6px;
+    background-color: var(--color-surface-muted);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .status-pill-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+  }
+
+  .status-pill-ratio {
+    font-size: 11px;
+    color: var(--color-text-muted);
   }
 }
 
-/* ─── Responsive Breakdown (< 900px) ─────────────────────────────────────── */
-@media (max-width: 900px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: $space-5;
+.portal-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-body);
+  line-height: 1.4;
+
+  .portal-info-icon {
+    color: var(--color-primary-blue);
+    flex-shrink: 0;
+    margin-top: 1px;
   }
 }
 
-@media (max-width: 480px) {
-  .page-header {
+/* ─── RECENT EMPLOYEES TABLE ─────────────────────────────────────────────── */
+.employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .employee-cell-meta {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: $space-3;
 
-    &__right {
-      align-self: flex-end;
+    .employee-name {
+      font-weight: 600;
+      color: var(--color-text-heading);
+    }
+
+    .employee-email {
+      font-size: 12px;
+      color: var(--color-text-muted);
     }
   }
+}
+
+.employee-id-pill {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary-blue);
+  background-color: var(--color-primary-blue-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.department-tag {
+  font-size: 13px;
+  color: var(--color-text-body);
+}
+
+.designation-text {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.date-text {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.text-right {
+  text-align: right;
 }

@@ -11,11 +11,10 @@ import { guestGuard }                from './core/guards/guest.guard';
 import { roleMatchGuard }            from './core/guards/role.guard';
 
 const routes: Routes = [
-  // Default redirect – send bare "/" straight to the dashboard
+  // Default redirect – send bare "/" to dashboard
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-  // Public pages (login, register) use the minimal centred layout
-  // guestGuard ensures logged-in users are redirected straight to /dashboard
+  // Public authentication routes (login)
   {
     path: 'auth',
     component: PublicLayoutComponent,
@@ -30,8 +29,7 @@ const routes: Routes = [
     ]
   },
 
-  // Protected pages share the top-bar + sidebar shell
-  // canActivate and canActivateChild protect the parent shell and every child route
+  // Protected application routes sharing the topbar + collapsible sidebar layout
   {
     path: '',
     component: AppLayoutComponent,
@@ -40,22 +38,29 @@ const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        canMatch: [roleMatchGuard],
+        data: { roles: ['ADMIN', 'HR'] },
         loadChildren: () =>
           import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
+      },
+      {
+        path: 'employees',
+        canMatch: [roleMatchGuard],
+        data: { roles: ['ADMIN', 'HR'] },
+        loadChildren: () =>
+          import('./features/employees/employees.module').then(m => m.EmployeesModule)
+      },
+      {
+        path: 'departments',
+        canMatch: [roleMatchGuard],
+        data: { roles: ['ADMIN', 'HR'] },
+        loadChildren: () =>
+          import('./features/departments/departments.module').then(m => m.DepartmentsModule)
       },
       {
         path: 'profile',
         loadChildren: () =>
           import('./features/profile/profile.module').then(m => m.ProfileModule)
-      },
-      {
-        path: 'reports',
-        // canMatch is used here so the lazy chunk bundle is not even downloaded if the user role is not ADMIN,
-        // whereas canActivate runs after the route is matched and module chunk is fetched.
-        canMatch: [roleMatchGuard],
-        data: { roles: ['ADMIN'] },
-        loadChildren: () =>
-          import('./features/reports/reports.module').then(m => m.ReportsModule)
       },
       {
         path: 'forbidden',
@@ -64,12 +69,13 @@ const routes: Routes = [
     ]
   },
 
-  // 404 – must be last
+  // 404 handler
+  { path: 'not-found', component: NotFoundComponent },
   { path: '**', component: NotFoundComponent }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' })],
   exports: [RouterModule]
 })
 export class AppRoutingModule {}

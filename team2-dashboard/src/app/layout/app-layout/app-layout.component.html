@@ -1,95 +1,318 @@
-<div class="shell" [class.sidebar-open]="sidebarOpen">
+<div class="portal-container" [class.sidebar-collapsed]="sidebarCollapsed" [class.mobile-open]="sidebarMobileOpen">
 
-  <!-- ── Top bar ───────────────────────────────────────────────────────── -->
-  <header class="topbar">
-    <div class="topbar__left">
-      <!-- Hamburger – visible only below 800 px -->
-      <button class="hamburger" (click)="toggleSidebar()" aria-label="Toggle navigation">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
-             stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-          <line x1="2" y1="5"  x2="18" y2="5"/>
-          <line x1="2" y1="10" x2="18" y2="10"/>
-          <line x1="2" y1="15" x2="18" y2="15"/>
+  <!-- Mobile Backdrop Overlay -->
+  <div class="mobile-backdrop" (click)="closeMobileSidebar()"></div>
+
+  <!-- ── SIDEBAR NAVIGATION ─────────────────────────────────────────── -->
+  <aside class="sidebar" aria-label="Portal Navigation">
+    <!-- Brand Logo -->
+    <div class="sidebar__brand">
+      <a routerLink="/" class="brand-link">
+        <div class="brand-logo-icon">
+          <!-- Distinctive EmployeeHub People & Connection Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="24" height="24" rx="6" fill="#2563EB"/>
+            <circle cx="9" cy="8" r="3" fill="#FFFFFF"/>
+            <path d="M4 18C4 15.2386 6.23858 13 9 13C11.7614 13 14 15.2386 14 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="16" cy="11" r="2.2" fill="#93C5FD"/>
+            <path d="M14.5 18C14.5 16.3431 15.8431 15 17.5 15C18.6 15 19.5 15.6 19.9 16.5" stroke="#93C5FD" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text" *ngIf="!sidebarCollapsed">
+          <span class="brand-title">Employee<span class="brand-accent">Hub</span></span>
+          <span class="brand-badge">HR PORTAL</span>
+        </div>
+      </a>
+      <button type="button" class="btn-sidebar-toggle" (click)="toggleCollapseSidebar()" aria-label="Collapse sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"></polyline>
         </svg>
       </button>
-      <span class="topbar__brand">Team 2 Dashboard</span>
     </div>
 
-    <div class="topbar__right">
-      <ng-container *ngIf="currentUser$ | async as user; else guest">
-        <span class="topbar__user">
-          <span class="topbar__user-name">{{ user.name }}</span>
-          <span class="topbar__user-role">({{ user.role }})</span>
-        </span>
-      </ng-container>
-      <ng-template #guest>
-        <span class="topbar__user">
-          <span class="topbar__user-name">Guest</span>
-        </span>
-      </ng-template>
+    <!-- Main Navigation Links -->
+    <nav class="sidebar__nav">
+      <div class="nav-section-label" *ngIf="!sidebarCollapsed">MAIN MENU</div>
 
-      <button class="btn-logout" (click)="onLogout()">Log out</button>
+      <ul class="nav-list">
+        <!-- Dashboard (Admin & HR) -->
+        <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
+          <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            </span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">Dashboard</span>
+          </a>
+        </li>
+
+        <!-- Employees (Admin & HR) -->
+        <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
+          <a routerLink="/employees" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">Employees</span>
+          </a>
+        </li>
+
+        <!-- Departments (Admin & HR) -->
+        <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
+          <a routerLink="/departments" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18"></path>
+                <path d="M3 7v14"></path>
+                <path d="M13 7v14"></path>
+                <path d="M21 7v14"></path>
+                <path d="M2 7h20L12 2z"></path>
+              </svg>
+            </span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">Departments</span>
+          </a>
+        </li>
+
+        <!-- My Profile (All Roles) -->
+        <li>
+          <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">My Profile</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Role Clearance Info Box (when expanded) -->
+    <div class="sidebar__role-box" *ngIf="!sidebarCollapsed && (currentUser$ | async) as user">
+      <div class="role-box-header">
+        <span class="role-indicator-dot" [ngClass]="user.role.toLowerCase()"></span>
+        <span class="role-box-label">{{ user.role }} ACCESS</span>
+      </div>
+      <p class="role-box-desc" *ngIf="user.role === 'ADMIN'">Full administration clearance: Add, edit, delete records & departments.</p>
+      <p class="role-box-desc" *ngIf="user.role === 'HR'">People Operations clearance: Employee directory management & department view.</p>
+      <p class="role-box-desc" *ngIf="user.role === 'EMPLOYEE'">Self-service portal: Personal profile & directory view.</p>
     </div>
-  </header>
 
-  <!-- ── Sidebar overlay (mobile only) ────────────────────────────────── -->
-  <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+    <!-- Sidebar Bottom Footer -->
+    <div class="sidebar__footer">
+      <button type="button" class="btn-logout-sidebar" (click)="onLogout()" title="Log Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Sign Out</span>
+      </button>
+    </div>
+  </aside>
 
-  <!-- ── Sidebar ───────────────────────────────────────────────────────── -->
-  <nav class="sidebar" aria-label="Main navigation">
-    <ul class="sidebar__nav">
-      <li>
-        <a routerLink="/dashboard"
-           routerLinkActive="active"
-           (click)="closeSidebar()">
-          <!-- Grid / home icon -->
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-               stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
+  <!-- ── MAIN WRAPPER ──────────────────────────────────────────────── -->
+  <div class="portal-main">
+
+    <!-- ── TOP NAVIGATION BAR ────────────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar__left">
+        <!-- Mobile Hamburger -->
+        <button type="button" class="btn-hamburger" (click)="toggleMobileSidebar()" aria-label="Toggle navigation drawer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
-          Dashboard
-        </a>
-      </li>
-      <li>
-        <a routerLink="/profile"
-           routerLinkActive="active"
-           (click)="closeSidebar()">
-          <!-- Person icon -->
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-               stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-          Profile
-        </a>
-      </li>
-      <!-- Reports link is only shown to ADMIN users -->
-      <li *ngIf="(currentUser$ | async)?.role === 'ADMIN'">
-        <a routerLink="/reports"
-           routerLinkActive="active"
-           (click)="closeSidebar()">
-          <!-- Bar chart icon -->
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-               stroke-linejoin="round" aria-hidden="true">
-            <rect x="3"  y="12" width="4" height="9" rx="1"/>
-            <rect x="10" y="7"  width="4" height="14" rx="1"/>
-            <rect x="17" y="3"  width="4" height="18" rx="1"/>
-          </svg>
-          Reports
-        </a>
-      </li>
-    </ul>
-  </nav>
+        </button>
 
-  <!-- ── Main content ──────────────────────────────────────────────────── -->
-  <main class="main-content">
-    <router-outlet></router-outlet>
-  </main>
+        <!-- Page Title & Breadcrumbs -->
+        <div class="page-meta">
+          <div class="breadcrumb-trail">
+            <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
+              <span class="breadcrumb-item" [class.current]="last">
+                <a *ngIf="crumb.url && !last" [routerLink]="crumb.url">{{ crumb.label }}</a>
+                <span *ngIf="!crumb.url || last">{{ crumb.label }}</span>
+              </span>
+              <span class="breadcrumb-sep" *ngIf="!last">/</span>
+            </ng-container>
+          </div>
+          <h1 class="page-current-title">{{ pageTitle }}</h1>
+        </div>
+      </div>
 
+      <!-- Center: Quick Search Bar -->
+      <div class="topbar__center">
+        <form class="search-form" (submit)="onGlobalSearch($event)">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Search employees by name, email, department..."
+                   [(ngModel)]="globalSearch"
+                   name="globalSearch"
+                   aria-label="Search employee directory" />
+            <span class="search-badge">Press Enter</span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Role Switcher Demo, Notifications, User Avatar & Menu -->
+      <div class="topbar__right">
+
+        <!-- Quick Role Switcher Pill (Crucial for Internship Demo!) -->
+        <div class="header-dropdown-container demo-role-switch-container">
+          <div class="role-pill-group">
+            <span class="role-pill-label">Demo Role:</span>
+            <button type="button"
+                    class="role-pill-btn"
+                    [class.active]="authService.currentRole === 'ADMIN'"
+                    (click)="switchDemoRole('ADMIN')"
+                    title="Switch to Admin role">
+              Admin
+            </button>
+            <button type="button"
+                    class="role-pill-btn"
+                    [class.active]="authService.currentRole === 'HR'"
+                    (click)="switchDemoRole('HR')"
+                    title="Switch to HR Specialist role">
+              HR
+            </button>
+            <button type="button"
+                    class="role-pill-btn"
+                    [class.active]="authService.currentRole === 'EMPLOYEE'"
+                    (click)="switchDemoRole('EMPLOYEE')"
+                    title="Switch to Employee self-service role">
+              Employee
+            </button>
+          </div>
+        </div>
+
+        <!-- Notification Bell & Dropdown -->
+        <div class="header-dropdown-container">
+          <button type="button"
+                  class="btn-icon"
+                  [class.active]="notificationsOpen"
+                  (click)="toggleNotifications()"
+                  aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" *ngIf="notificationService.unreadCount > 0">
+              {{ notificationService.unreadCount }}
+            </span>
+          </button>
+
+          <!-- Notifications Dropdown Panel -->
+          <div class="dropdown-panel notifications-panel" *ngIf="notificationsOpen">
+            <div class="panel-header">
+              <span class="panel-title">Notifications</span>
+              <button type="button" class="btn-text-sm" (click)="notificationService.markAllAsRead()">Mark all as read</button>
+            </div>
+            <div class="panel-list">
+              <div *ngFor="let notif of notifications$ | async"
+                   class="notification-item"
+                   [class.unread]="!notif.read"
+                   (click)="notificationService.markAsRead(notif.id)">
+                <div class="notif-dot" *ngIf="!notif.read"></div>
+                <div class="notif-body">
+                  <div class="notif-title">{{ notif.title }}</div>
+                  <div class="notif-text">{{ notif.message }}</div>
+                  <div class="notif-time">{{ notif.time }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Dropdown -->
+        <div class="header-dropdown-container" *ngIf="currentUser$ | async as user">
+          <button type="button"
+                  class="user-profile-btn"
+                  [class.active]="profileMenuOpen"
+                  (click)="toggleProfileMenu()">
+            <app-avatar [src]="user.avatar" [name]="user.name" size="sm" [showStatus]="true"></app-avatar>
+            <div class="user-meta-text">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="user-role-tag">{{ user.role }}</span>
+            </div>
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Profile Menu Dropdown -->
+          <div class="dropdown-panel profile-menu-panel" *ngIf="profileMenuOpen">
+            <div class="profile-card-header">
+              <app-avatar [src]="user.avatar" [name]="user.name" size="md"></app-avatar>
+              <div class="profile-card-text">
+                <div class="card-user-name">{{ user.name }}</div>
+                <div class="card-user-email">{{ user.email }}</div>
+                <div class="card-user-id" *ngIf="user.employeeId">{{ user.employeeId }} &middot; {{ user.designation }}</div>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <ul class="dropdown-menu-list">
+              <li>
+                <a routerLink="/profile" (click)="profileMenuOpen = false" class="dropdown-menu-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  My Profile
+                </a>
+              </li>
+              <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
+                <a routerLink="/employees" (click)="profileMenuOpen = false" class="dropdown-menu-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                  Employee Directory
+                </a>
+              </li>
+            </ul>
+
+            <div class="dropdown-divider"></div>
+
+            <div class="dropdown-footer-actions">
+              <button type="button" class="btn-logout-dropdown" (click)="onLogout()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ── MAIN ROUTER CONTENT VIEWPORT ──────────────────────────────── -->
+    <main class="content-viewport" id="main-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+  <!-- Reusable Toast Notifications -->
+  <app-toast-container></app-toast-container>
 </div>

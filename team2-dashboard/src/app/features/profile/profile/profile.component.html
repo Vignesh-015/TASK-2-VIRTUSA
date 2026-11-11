@@ -1,21 +1,295 @@
-<div class="page-header">
-  <h1>Profile</h1>
-  <p>View and update your personal information and account settings.</p>
-</div>
+<div class="profile-page" *ngIf="user">
 
-<!-- Placeholder section — form fields will be added when the API is ready -->
-<section class="profile-section">
-  <h2>Account details</h2>
-  <div class="detail-row">
-    <span class="detail-row__label">Full name</span>
-    <span class="detail-row__value">Alex Johnson</span>
+  <!-- ── PROFILE HERO HEADER CARD ────────────────────────────────────── -->
+  <div class="card profile-hero-card">
+    <div class="profile-hero-cover">
+      <div class="cover-overlay"></div>
+    </div>
+
+    <div class="profile-hero-body">
+      <div class="hero-avatar-wrapper">
+        <app-avatar [src]="user.avatar" [name]="user.name" size="xl" [showStatus]="true" [status]="user.status || 'ACTIVE'"></app-avatar>
+      </div>
+
+      <div class="hero-info-section">
+        <div class="hero-title-row">
+          <div class="name-id-group">
+            <h1 class="hero-name">{{ user.name }}</h1>
+            <span class="hero-id-pill">{{ user.employeeId || 'EMP-1001' }}</span>
+          </div>
+
+          <div class="hero-badges-group">
+            <app-status-badge [status]="user.role" type="role"></app-status-badge>
+            <app-status-badge [status]="user.status || 'ACTIVE'"></app-status-badge>
+          </div>
+        </div>
+
+        <p class="hero-designation">{{ user.designation || 'Staff Enterprise Specialist' }} &bull; {{ user.department || 'Engineering' }}</p>
+
+        <!-- Quick Summary Pills -->
+        <div class="hero-meta-strip">
+          <div class="meta-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>{{ user.email }}</span>
+          </div>
+          <div class="meta-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>{{ user.location || 'New York, NY (Hybrid)' }}</span>
+          </div>
+          <div class="meta-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Joined {{ (user.joinDate || '2022-03-15') | date:'mediumDate' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button type="button" class="btn btn-outline" (click)="setTab('edit')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit Profile
+        </button>
+      </div>
+    </div>
   </div>
-  <div class="detail-row">
-    <span class="detail-row__label">Email</span>
-    <span class="detail-row__value">alex.johnson&#64;example.com</span>
+
+  <!-- ── TAB NAVIGATION ──────────────────────────────────────────────── -->
+  <div class="tabs-nav-bar">
+    <button type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'personal'"
+            (click)="setTab('personal')">
+      Personal Information
+    </button>
+    <button type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'job'"
+            (click)="setTab('job')">
+      Employment & Role
+    </button>
+    <button type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'skills'"
+            (click)="setTab('skills')">
+      Skills & Competencies
+    </button>
+    <button type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'edit'"
+            (click)="setTab('edit')">
+      Edit Profile Details
+    </button>
   </div>
-  <div class="detail-row">
-    <span class="detail-row__label">Role</span>
-    <span class="detail-row__value">Student</span>
+
+  <!-- ── TAB CONTENT ─────────────────────────────────────────────────── -->
+
+  <!-- Tab 1: Personal Information -->
+  <div *ngIf="activeTab === 'personal'" class="tab-pane-content">
+    <div class="profile-cards-grid">
+      <!-- Contact Details -->
+      <div class="card detail-card">
+        <div class="card-header">
+          <h3 class="card-title">Contact Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">Full Name</span>
+            <span class="info-value">{{ user.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Work Email</span>
+            <span class="info-value highlight">{{ user.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Direct Phone</span>
+            <span class="info-value">{{ user.phone || '+1 (555) 234-5678' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Office Base</span>
+            <span class="info-value">{{ user.location || 'New York, NY (Hybrid)' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="card detail-card">
+        <div class="card-header">
+          <h3 class="card-title">Emergency Contact</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">Primary Contact</span>
+            <span class="info-value">{{ employeeDossier?.emergencyContact?.name || 'Sarah Connor' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Relationship</span>
+            <span class="info-value">{{ employeeDossier?.emergencyContact?.relationship || 'Spouse' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Emergency Phone</span>
+            <span class="info-value highlight">{{ employeeDossier?.emergencyContact?.phone || '+1 (555) 998-1122' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional Summary Card -->
+    <div class="card detail-card">
+      <div class="card-header">
+        <h3 class="card-title">Professional Bio & Notes</h3>
+      </div>
+      <div class="card-body">
+        <p class="bio-text">
+          {{ employeeDossier?.bio || 'Dedicated enterprise personnel focused on high-reliability solutions, team collaboration, and adherence to security governance and industry best practices.' }}
+        </p>
+      </div>
+    </div>
   </div>
-</section>
+
+  <!-- Tab 2: Employment & Organization -->
+  <div *ngIf="activeTab === 'job'" class="tab-pane-content">
+    <div class="profile-cards-grid">
+      <!-- Organizational Assignment -->
+      <div class="card detail-card">
+        <div class="card-header">
+          <h3 class="card-title">Position & Department</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">Employee ID</span>
+            <span class="info-value font-mono">{{ user.employeeId || 'EMP-1001' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Department</span>
+            <span class="info-value">{{ user.department || 'Engineering' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Official Designation</span>
+            <span class="info-value">{{ user.designation || 'Specialist' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Reporting Line</span>
+            <span class="info-value">{{ employeeDossier?.manager || 'Executive Team' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contract & Status -->
+      <div class="card detail-card">
+        <div class="card-header">
+          <h3 class="card-title">Employment Contract</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">Employment Status</span>
+            <app-status-badge [status]="user.status || 'ACTIVE'"></app-status-badge>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Employment Type</span>
+            <span class="info-value">Full-Time (Salaried)</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Date of Joining</span>
+            <span class="info-value">{{ (user.joinDate || '2022-03-15') | date:'longDate' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Security Clearance</span>
+            <span class="info-value">{{ user.role }} Privilege</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Skills & Competencies -->
+  <div *ngIf="activeTab === 'skills'" class="tab-pane-content">
+    <div class="card detail-card">
+      <div class="card-header">
+        <h3 class="card-title">Core Skills & Certifications</h3>
+      </div>
+      <div class="card-body">
+        <div class="skills-wrapper">
+          <div class="skills-cloud">
+            <span *ngFor="let s of employeeDossier?.skills" class="skill-tag">
+              {{ s }}
+            </span>
+          </div>
+        </div>
+
+        <div class="certifications-box">
+          <h4 class="subheading">Verified Credentials & Compliance</h4>
+          <div class="cert-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div class="cert-text">
+              <span class="cert-title">Enterprise Security & Compliance Certified (Q4 2026)</span>
+              <span class="cert-issuer">EmployeeHub HR Compliance Division</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Edit Profile Details -->
+  <div *ngIf="activeTab === 'edit'" class="tab-pane-content">
+    <div class="card detail-card">
+      <div class="card-header">
+        <h3 class="card-title">Update Personal Information</h3>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="editProfileForm" (ngSubmit)="saveProfile()" class="edit-profile-form">
+          <div class="form-grid-2">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label" for="editName">Full Name <span class="required">*</span></label>
+              <input id="editName" type="text" class="form-control" formControlName="name" />
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+              <label class="form-label" for="editPhone">Direct Phone <span class="required">*</span></label>
+              <input id="editPhone" type="text" class="form-control" formControlName="phone" />
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-group">
+            <label class="form-label" for="editLoc">Office / Base Location <span class="required">*</span></label>
+            <input id="editLoc" type="text" class="form-control" formControlName="location" />
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group">
+            <label class="form-label" for="editBio">Professional Bio</label>
+            <textarea id="editBio" rows="3" class="form-control" formControlName="bio"></textarea>
+          </div>
+
+          <div class="form-actions-right">
+            <button type="button" class="btn btn-secondary" (click)="setTab('personal')">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+              <span *ngIf="!isSubmitting">Save Changes</span>
+              <span *ngIf="isSubmitting">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
