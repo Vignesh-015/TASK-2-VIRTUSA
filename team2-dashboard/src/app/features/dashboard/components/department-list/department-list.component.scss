@@ -1,0 +1,109 @@
+@import '../../../../../styles/variables';
+
+.department-card {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $space-5;
+  height: 100%;
+}
+
+.section-heading {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-muted;
+  padding-bottom: $space-3;
+  margin-bottom: $space-2;
+  border-bottom: 1px solid $color-border;
+}
+
+.dept-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dept-row {
+  display: flex;
+  align-items: center;
+  padding: $space-3 0;
+  border-bottom: 1px solid $color-border;
+  font-size: 13px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.dept-name {
+  flex: 0 0 130px;
+  max-width: 150px;
+  color: $color-text;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-bar-track {
+  flex: 1 1 auto;
+  margin: 0 $space-4;
+  height: 4px;
+  background-color: #F0F2F5;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dept-bar-fill {
+  height: 100%;
+  background-color: rgba(36, 87, 166, 0.70); // Accent blue at 70% tone
+  border-radius: 2px;
+}
+
+.dept-count {
+  flex: 0 0 32px;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.dept-empty {
+  padding: $space-4 0;
+  font-size: 13px;
+  color: $color-text-muted;
+}
+
+/* ─── Skeleton Placeholders ──────────────────────────────────────────────── */
+.dept-row--placeholder {
+  .placeholder-name {
+    flex: 0 0 110px;
+    height: 14px;
+    background-color: #EAECEF;
+    border-radius: 2px;
+  }
+
+  .placeholder-bar {
+    width: 60%;
+    height: 100%;
+    background-color: #EAECEF;
+  }
+
+  .placeholder-count {
+    flex: 0 0 24px;
+    height: 14px;
+    background-color: #EAECEF;
+    border-radius: 2px;
+  }
+}
+
+/* ─── Mobile adjustments ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .dept-name {
+    flex: 0 0 100px;
+  }
+  .dept-bar-track {
+    margin: 0 $space-2;
+  }
+}

@@ -1,0 +1,70 @@
+<section class="summary-strip" aria-label="Staff metrics summary">
+  <!-- Total Employees (Wider Column) -->
+  <div class="summary-col summary-col--primary">
+    <span class="summary-col__label">Total employees</span>
+    <ng-container *ngIf="!isLoading && stats; else loadingTotal">
+      <div class="summary-col__value summary-col__value--total">
+        {{ stats.totalUsers }}
+      </div>
+    </ng-container>
+    <ng-template #loadingTotal>
+      <div class="placeholder-block placeholder-block--large" aria-hidden="true"></div>
+    </ng-template>
+  </div>
+
+  <!-- Active Employees -->
+  <div class="summary-col">
+    <span class="summary-col__label">Active</span>
+    <ng-container *ngIf="!isLoading && stats; else loadingActive">
+      <div class="summary-col__value-wrap summary-col__value-wrap--active">
+        <span class="summary-col__value">{{ stats.activeUsers }}</span>
+      </div>
+      <span class="summary-col__ratio">{{ activeRatio }}</span>
+    </ng-container>
+    <ng-template #loadingActive>
+      <div class="placeholder-block placeholder-block--value" aria-hidden="true"></div>
+      <div class="placeholder-block placeholder-block--ratio" aria-hidden="true"></div>
+    </ng-template>
+  </div>
+
+  <!-- Inactive Employees -->
+  <div class="summary-col">
+    <span class="summary-col__label">Inactive</span>
+    <ng-container *ngIf="!isLoading && stats; else loadingInactive">
+      <div class="summary-col__value-wrap">
+        <span class="summary-col__value">{{ stats.inactiveUsers }}</span>
+      </div>
+      <span class="summary-col__ratio">{{ inactiveRatio }}</span>
+    </ng-container>
+    <ng-template #loadingInactive>
+      <div class="placeholder-block placeholder-block--value" aria-hidden="true"></div>
+      <div class="placeholder-block placeholder-block--ratio" aria-hidden="true"></div>
+    </ng-template>
+  </div>
+
+  <!-- Departments -->
+  <div class="summary-col">
+    <span class="summary-col__label">Departments</span>
+    <ng-container *ngIf="!isLoading && stats; else loadingDepartments">
+      <div class="summary-col__value-wrap">
+        <span class="summary-col__value">{{ stats.departments }}</span>
+      </div>
+    </ng-container>
+    <ng-template #loadingDepartments>
+      <div class="placeholder-block placeholder-block--value" aria-hidden="true"></div>
+    </ng-template>
+  </div>
+
+  <!-- On Leave -->
+  <div class="summary-col">
+    <span class="summary-col__label">On leave</span>
+    <ng-container *ngIf="!isLoading && stats; else loadingLeave">
+      <div class="summary-col__value-wrap">
+        <span class="summary-col__value">{{ stats.onLeave }}</span>
+      </div>
+    </ng-container>
+    <ng-template #loadingLeave>
+      <div class="placeholder-block placeholder-block--value" aria-hidden="true"></div>
+    </ng-template>
+  </div>
+</section>

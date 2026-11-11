@@ -1,0 +1,95 @@
+<div class="shell" [class.sidebar-open]="sidebarOpen">
+
+  <!-- ── Top bar ───────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar__left">
+      <!-- Hamburger – visible only below 800 px -->
+      <button class="hamburger" (click)="toggleSidebar()" aria-label="Toggle navigation">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <line x1="2" y1="5"  x2="18" y2="5"/>
+          <line x1="2" y1="10" x2="18" y2="10"/>
+          <line x1="2" y1="15" x2="18" y2="15"/>
+        </svg>
+      </button>
+      <span class="topbar__brand">Team 2 Dashboard</span>
+    </div>
+
+    <div class="topbar__right">
+      <ng-container *ngIf="currentUser$ | async as user; else guest">
+        <span class="topbar__user">
+          <span class="topbar__user-name">{{ user.name }}</span>
+          <span class="topbar__user-role">({{ user.role }})</span>
+        </span>
+      </ng-container>
+      <ng-template #guest>
+        <span class="topbar__user">
+          <span class="topbar__user-name">Guest</span>
+        </span>
+      </ng-template>
+
+      <button class="btn-logout" (click)="onLogout()">Log out</button>
+    </div>
+  </header>
+
+  <!-- ── Sidebar overlay (mobile only) ────────────────────────────────── -->
+  <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────────── -->
+  <nav class="sidebar" aria-label="Main navigation">
+    <ul class="sidebar__nav">
+      <li>
+        <a routerLink="/dashboard"
+           routerLinkActive="active"
+           (click)="closeSidebar()">
+          <!-- Grid / home icon -->
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Dashboard
+        </a>
+      </li>
+      <li>
+        <a routerLink="/profile"
+           routerLinkActive="active"
+           (click)="closeSidebar()">
+          <!-- Person icon -->
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          Profile
+        </a>
+      </li>
+      <!-- Reports link is only shown to ADMIN users -->
+      <li *ngIf="(currentUser$ | async)?.role === 'ADMIN'">
+        <a routerLink="/reports"
+           routerLinkActive="active"
+           (click)="closeSidebar()">
+          <!-- Bar chart icon -->
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <rect x="3"  y="12" width="4" height="9" rx="1"/>
+            <rect x="10" y="7"  width="4" height="14" rx="1"/>
+            <rect x="17" y="3"  width="4" height="18" rx="1"/>
+          </svg>
+          Reports
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ── Main content ──────────────────────────────────────────────────── -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>

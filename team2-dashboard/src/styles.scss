@@ -1,0 +1,95 @@
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Colours */
+  --color-bg:        #F6F4EF;   /* warm off-white page background */
+  --color-surface:   #FFFFFF;   /* cards, sidebars, top bar */
+  --color-border:    #E2DED5;   /* thin separators */
+  --color-text:      #222831;   /* primary body text */
+  --color-text-muted:#6B7280;   /* secondary/helper text */
+  --color-accent:    #2F6F62;   /* muted teal – active state, buttons, links */
+  --color-accent-bg: #EBF4F2;   /* very light tint of accent for hover states */
+
+  /* Spacing (8-px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radius – kept modest, never pill-shaped */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  /* Typography */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --line-height: 1.6;
+}
+
+/* ─── Reset / base ──────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+
+p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* ─── Utility: visually hidden (accessibility) ───────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

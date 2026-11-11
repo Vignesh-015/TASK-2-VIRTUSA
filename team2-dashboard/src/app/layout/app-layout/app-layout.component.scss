@@ -1,0 +1,206 @@
+// Sizes that need to be consistent across the layout
+$topbar-height: 56px;
+$sidebar-width: 220px;
+$sidebar-collapsed-bp: 800px;
+
+.shell {
+  display: grid;
+  grid-template-areas:
+    "topbar  topbar"
+    "sidebar main";
+  grid-template-rows: $topbar-height 1fr;
+  grid-template-columns: $sidebar-width 1fr;
+  min-height: 100vh;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  height: $topbar-height;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  /* keeps it above sidebar on mobile */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  &__brand {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  &__user {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+  }
+
+  &__user-name {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__user-role {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+}
+
+/* ── Hamburger ───────────────────────────────────────────────────────────── */
+.hamburger {
+  display: none;        // hidden on desktop
+  background: none;
+  border: none;
+  padding: var(--space-1);
+  color: var(--color-text);
+  line-height: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover {
+    background: var(--color-bg);
+  }
+}
+
+/* ── Log-out button ──────────────────────────────────────────────────────── */
+.btn-logout {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-muted);
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: var(--color-text);
+    border-color: #bbb;
+  }
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-5) 0;
+  /* Sidebar scrolls independently if the nav list gets long */
+  overflow-y: auto;
+
+  &__nav {
+    list-style: none;
+
+    li a {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+
+      svg {
+        flex-shrink: 0;
+        opacity: 0.7;
+      }
+
+      &:hover {
+        color: var(--color-text);
+        background: var(--color-bg);
+      }
+
+      /* routerLinkActive class applied by Angular */
+      &.active {
+        color: var(--color-accent);
+        border-left-color: var(--color-accent);
+        background: var(--color-accent-bg);
+
+        svg {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+/* ── Main content area ───────────────────────────────────────────────────── */
+.main-content {
+  grid-area: main;
+  padding: var(--space-6);
+  background: var(--color-bg);
+  overflow-y: auto;
+}
+
+/* ── Overlay (mobile only, sits behind the sidebar) ─────────────────────── */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ── Responsive: collapse sidebar below 800 px ───────────────────────────── */
+@media (max-width: #{$sidebar-collapsed-bp}) {
+  .shell {
+    grid-template-areas:
+      "topbar"
+      "main";
+    grid-template-columns: 1fr;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .sidebar {
+    // Slide in from the left as a drawer
+    position: fixed;
+    top: $topbar-height;
+    left: 0;
+    bottom: 0;
+    width: $sidebar-width;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    border-right: 1px solid var(--color-border);
+    box-shadow: none;
+  }
+
+  .shell.sidebar-open {
+    .sidebar {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      top: $topbar-height;
+      background: rgba(0, 0, 0, 0.18);
+      z-index: 150;
+    }
+  }
+
+  .main-content {
+    padding: var(--space-5) var(--space-4);
+  }
+}

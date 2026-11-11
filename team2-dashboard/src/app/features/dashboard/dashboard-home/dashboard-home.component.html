@@ -1,0 +1,51 @@
+<div class="dashboard-page">
+  <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__meta">
+        <span class="page-header__date">{{ currentDate }}</span>
+        <span class="page-header__sep" aria-hidden="true">&middot;</span>
+        <span class="page-header__greeting">Welcome, {{ greetingName }}</span>
+      </div>
+      <h1 class="page-header__title">Overview</h1>
+    </div>
+
+    <div class="page-header__right">
+      <button type="button"
+              class="btn-refresh"
+              (click)="loadData()"
+              [disabled]="isLoading">
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Plain Inline Error State ─────────────────────────────────────────── -->
+  <div *ngIf="hasError" class="dashboard-error" role="alert">
+    <span class="dashboard-error__text">Could not load dashboard data.</span>
+    <button type="button" class="btn-retry" (click)="loadData()">Try again</button>
+  </div>
+
+  <!-- ── Full-width Summary Strip ─────────────────────────────────────────── -->
+  <app-summary-strip
+    [stats]="stats"
+    [isLoading]="isLoading">
+  </app-summary-strip>
+
+  <!-- ── Asymmetric Two-Column Content ────────────────────────────────────── -->
+  <div class="dashboard-grid">
+    <div class="dashboard-grid__left">
+      <app-department-list
+        [departments]="departments"
+        [isLoading]="isLoading">
+      </app-department-list>
+    </div>
+
+    <div class="dashboard-grid__right">
+      <app-activity-timeline
+        [activities]="activities"
+        [isLoading]="isLoading">
+      </app-activity-timeline>
+    </div>
+  </div>
+</div>

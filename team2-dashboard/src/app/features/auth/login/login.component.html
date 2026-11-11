@@ -1,0 +1,79 @@
+<div class="auth-card">
+  <h1>Sign in</h1>
+  <p class="auth-subtitle">Enter your credentials to access your account.</p>
+
+  <!-- Info message (e.g. redirected after registration) -->
+  <div *ngIf="infoMessage" class="alert-box alert-box--info" role="status">
+    {{ infoMessage }}
+  </div>
+
+  <!-- Session expired message -->
+  <div *ngIf="sessionExpiredMessage" class="alert-box alert-box--neutral" role="status">
+    {{ sessionExpiredMessage }}
+  </div>
+
+  <!-- Server error message -->
+  <div *ngIf="errorMessage" class="alert-box alert-box--error" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+    <!-- Email field -->
+    <div class="form-field">
+      <label for="email">Email address</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+        [class.has-error]="email?.invalid && email?.touched"
+      />
+      <div *ngIf="email?.invalid && email?.touched" class="field-error">
+        <span *ngIf="email?.errors?.['required']">Email address is required.</span>
+        <span *ngIf="email?.errors?.['email']">Please enter a valid email address.</span>
+      </div>
+    </div>
+
+    <!-- Password field -->
+    <div class="form-field">
+      <label for="password">Password</label>
+      <div class="password-input-wrapper">
+        <input
+          id="password"
+          [type]="showPassword ? 'text' : 'password'"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          [class.has-error]="password?.invalid && password?.touched"
+        />
+        <button
+          type="button"
+          class="btn-password-toggle"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      <div *ngIf="password?.invalid && password?.touched" class="field-error">
+        <span *ngIf="password?.errors?.['required']">Password is required.</span>
+      </div>
+    </div>
+
+    <!-- Submit button with loading state -->
+    <button type="submit" class="btn-primary" [disabled]="isLoading">
+      {{ isLoading ? 'Signing in...' : 'Sign in' }}
+    </button>
+  </form>
+
+  <p class="auth-footer">
+    Don't have an account?
+    <a routerLink="/auth/register">Create one</a>
+  </p>
+
+  <!-- Mock accounts hint (only shown when useMockApi is true) -->
+  <div *ngIf="useMockApi" class="demo-accounts-hint">
+    <span>Demo accounts:</span> admin&#64;team2.com / Admin&#64;123 (Admin) • user&#64;team2.com / User&#64;123 (User)
+  </div>
+</div>

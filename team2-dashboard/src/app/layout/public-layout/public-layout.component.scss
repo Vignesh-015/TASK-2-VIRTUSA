@@ -1,0 +1,35 @@
+.public-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+.public-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+
+  &__content {
+    display: flex;
+    align-items: center;
+  }
+
+  &__brand {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+}
+
+.public-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start; /* top-aligned, not vertically glued to middle */
+  justify-content: center;
+  padding: var(--space-7) var(--space-4) var(--space-7) var(--space-4);
+}

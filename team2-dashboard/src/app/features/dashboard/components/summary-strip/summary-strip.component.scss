@@ -1,0 +1,122 @@
+@import '../../../../../styles/variables';
+
+.summary-strip {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: $space-6;
+}
+
+.summary-col {
+  flex: 1 1 0;
+  padding: $space-5 $space-5;
+  border-right: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &--primary {
+    flex: 1.5 1 0;
+    padding-right: $space-6;
+  }
+
+  &__label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-muted;
+    margin-bottom: $space-2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__value-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    min-height: 48px;
+
+    &--active {
+      border-left: 3px solid $color-success;
+      padding-left: $space-2;
+    }
+  }
+
+  &__value {
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: $color-text;
+    font-variant-numeric: tabular-nums;
+
+    &--total {
+      font-size: 44px;
+      line-height: 1.1;
+      min-height: 48px;
+    }
+  }
+
+  &__ratio {
+    display: block;
+    margin-top: $space-1;
+    font-size: 12px;
+    color: $color-text-muted;
+    line-height: 1.3;
+  }
+}
+
+/* ─── Loading state: simple grey placeholder blocks ─────────────────────── */
+.placeholder-block {
+  background-color: #EAECEF;
+  border-radius: 2px;
+
+  &--large {
+    width: 90px;
+    height: 44px;
+    margin: 4px 0;
+  }
+
+  &--value {
+    width: 65px;
+    height: 40px;
+    margin: 4px 0;
+  }
+
+  &--ratio {
+    width: 80px;
+    height: 12px;
+    margin-top: 6px;
+  }
+}
+
+/* ─── Mobile responsiveness (< 768px) ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .summary-strip {
+    flex-direction: column;
+  }
+
+  .summary-col {
+    border-right: none;
+    border-bottom: 1px solid $color-border;
+    padding: $space-4 $space-5;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--primary {
+      flex: 1 1 auto;
+    }
+  }
+}

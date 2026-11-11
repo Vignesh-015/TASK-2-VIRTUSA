@@ -1,0 +1,132 @@
+@import '../../../../../styles/variables';
+
+.activity-card {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $space-5;
+  height: 100%;
+}
+
+.section-heading {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-muted;
+  padding-bottom: $space-3;
+  margin-bottom: $space-2;
+  border-bottom: 1px solid $color-border;
+}
+
+.timeline-list,
+.timeline-loading {
+  position: relative;
+  list-style: none;
+  padding: 0;
+  margin: $space-3 0 0 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 14px;
+    left: 3.5px;
+    width: 1px;
+    background-color: $color-border;
+  }
+}
+
+.timeline-item,
+.timeline-placeholder-item {
+  position: relative;
+  padding-left: 24px;
+  padding-bottom: $space-4;
+
+  &:last-child {
+    padding-bottom: $space-1;
+  }
+}
+
+.timeline-marker {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 0; // Strict requirement: small 8px square marker, not circle
+  flex-shrink: 0;
+
+  &--created {
+    background-color: $color-success;
+  }
+
+  &--updated {
+    background-color: $color-accent-blue;
+  }
+
+  &--deleted {
+    background-color: $color-danger; // Brick red #B3412E
+  }
+
+  &--login {
+    background-color: $color-login;
+  }
+
+  &--skeleton {
+    background-color: #D1D5DB;
+  }
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-message {
+  font-size: 13px;
+  font-weight: 400; // Regular weight
+  line-height: 1.45;
+  color: $color-text;
+  margin: 0;
+}
+
+.timeline-meta {
+  font-size: 12px;
+  color: $color-text-muted;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.timeline-divider {
+  margin: 0 $space-1;
+}
+
+.timeline-empty {
+  padding: $space-4 0;
+  font-size: 13px;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+/* ─── Skeleton Placeholders ──────────────────────────────────────────────── */
+.timeline-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.placeholder-line {
+  background-color: #EAECEF;
+  border-radius: 2px;
+
+  &--message {
+    width: 85%;
+    height: 14px;
+  }
+
+  &--meta {
+    width: 45%;
+    height: 12px;
+  }
+}
