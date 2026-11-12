@@ -9,6 +9,7 @@ import { StatCardComponent } from './components/stat-card/stat-card.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ModalComponent } from './components/modal/modal.component';
 import { ToastContainerComponent } from './components/toast-container/toast-container.component';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 
 const COMPONENTS = [
   AvatarComponent,
@@ -17,6 +18,7 @@ const COMPONENTS = [
   PaginationComponent,
   ModalComponent,
   ToastContainerComponent,
+  ConfirmDialogComponent,
   TimeAgoPipe
 ];
 

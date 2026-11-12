@@ -68,6 +68,15 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
     } else if (cleanUrl.startsWith('/departments')) {
       this.pageTitle = 'Department Management';
       this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'Departments' }];
+    } else if (cleanUrl === '/users/new') {
+      this.pageTitle = 'Add User';
+      this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'Users', url: '/users' }, { label: 'Add User' }];
+    } else if (cleanUrl.startsWith('/users/') && cleanUrl.endsWith('/edit')) {
+      this.pageTitle = 'Edit User';
+      this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'Users', url: '/users' }, { label: 'Edit User' }];
+    } else if (cleanUrl.startsWith('/users')) {
+      this.pageTitle = 'Users';
+      this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'Users' }];
     } else if (cleanUrl.startsWith('/profile')) {
       this.pageTitle = 'My Profile';
       this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'My Profile' }];

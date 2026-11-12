@@ -1,0 +1,182 @@
+<div class="user-form-page">
+
+  <!-- Header -->
+  <header class="form-page-header">
+    <button type="button" class="back-link" (click)="onCancel()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to users
+    </button>
+    <h1 class="form-page-title">{{ isEditMode ? 'Edit user' : 'Add user' }}</h1>
+    <p class="form-page-subtitle">
+      {{ isEditMode ? 'Update user account details, department, and portal access.' : 'Create a new internal user account and assign department access.' }}
+    </p>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoadingUser" class="card form-card form-loading">
+    Loading user details...
+  </div>
+
+  <!-- Form Card -->
+  <div *ngIf="!isLoadingUser" class="card form-card">
+    <div *ngIf="formError" class="form-alert-error" role="alert">
+      {{ formError }}
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <!-- Full Name -->
+          <div class="form-group">
+            <label for="user-fullName" class="form-label">
+              Full name <span class="required">*</span>
+            </label>
+            <input id="user-fullName"
+                   type="text"
+                   class="form-control"
+                   formControlName="fullName"
+                   placeholder="e.g. Aarav Sharma"
+                   [class.is-invalid]="showError('fullName')" />
+            <div *ngIf="showError('fullName')" class="form-error">
+              <span *ngIf="getControl('fullName')?.errors?.['required']">Full name is required.</span>
+              <span *ngIf="!getControl('fullName')?.errors?.['required'] && getControl('fullName')?.errors?.['minlength']">
+                Full name must be at least 3 characters.
+              </span>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="user-email" class="form-label">
+              Email <span class="required">*</span>
+            </label>
+            <input id="user-email"
+                   type="email"
+                   class="form-control"
+                   formControlName="email"
+                   placeholder="name@employeehub.com"
+                   [class.is-invalid]="showError('email')" />
+            <div *ngIf="showError('email')" class="form-error">
+              <span *ngIf="getControl('email')?.errors?.['required']">Email is required.</span>
+              <span *ngIf="!getControl('email')?.errors?.['required'] && (getControl('email')?.errors?.['email'] || getControl('email')?.errors?.['pattern'])">
+                Enter a valid email address.
+              </span>
+              <span *ngIf="!getControl('email')?.errors?.['required'] && !getControl('email')?.errors?.['email'] && !getControl('email')?.errors?.['pattern'] && getControl('email')?.errors?.['duplicateEmail']">
+                A user with this email already exists
+              </span>
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label for="user-phone" class="form-label">
+              Phone <span class="required">*</span>
+            </label>
+            <input id="user-phone"
+                   type="tel"
+                   class="form-control"
+                   formControlName="phone"
+                   placeholder="10-digit mobile number"
+                   maxlength="10"
+                   [class.is-invalid]="showError('phone')" />
+            <div *ngIf="showError('phone')" class="form-error">
+              <span *ngIf="getControl('phone')?.errors?.['required']">Phone number is required.</span>
+              <span *ngIf="!getControl('phone')?.errors?.['required'] && getControl('phone')?.errors?.['pattern']">
+                Enter a valid 10-digit phone number.
+              </span>
+            </div>
+          </div>
+
+          <!-- Department -->
+          <div class="form-group">
+            <label for="user-department" class="form-label">
+              Department <span class="required">*</span>
+            </label>
+            <select id="user-department"
+                    class="form-select"
+                    formControlName="department"
+                    [class.is-invalid]="showError('department')">
+              <option value="">Select department</option>
+              <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+            </select>
+            <div *ngIf="showError('department')" class="form-error">
+              Department is required.
+            </div>
+          </div>
+
+          <!-- Role -->
+          <div class="form-group">
+            <label for="user-role" class="form-label">
+              Role <span class="required">*</span>
+            </label>
+            <select id="user-role"
+                    class="form-select"
+                    formControlName="role"
+                    [class.is-invalid]="showError('role')">
+              <option value="">Select role</option>
+              <option value="ADMIN">Admin</option>
+              <option value="HR">HR</option>
+              <option value="EMPLOYEE">Employee</option>
+            </select>
+            <div *ngIf="showError('role')" class="form-error">
+              Role is required.
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group">
+            <label for="user-status" class="form-label">
+              Status <span class="required">*</span>
+            </label>
+            <select id="user-status"
+                    class="form-select"
+                    formControlName="status"
+                    [class.is-invalid]="showError('status')">
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+            <div *ngIf="showError('status')" class="form-error">
+              Status is required.
+            </div>
+          </div>
+
+          <!-- Joined On -->
+          <div class="form-group">
+            <label for="user-joinedOn" class="form-label">
+              Joined on <span class="required">*</span>
+            </label>
+            <input id="user-joinedOn"
+                   type="date"
+                   class="form-control"
+                   formControlName="joinedOn"
+                   [class.is-invalid]="showError('joinedOn')" />
+            <div *ngIf="showError('joinedOn')" class="form-error">
+              Joining date is required.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card-footer form-actions">
+        <button type="button"
+                class="btn btn-secondary"
+                (click)="onCancel()"
+                [disabled]="isSubmitting">
+          Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
