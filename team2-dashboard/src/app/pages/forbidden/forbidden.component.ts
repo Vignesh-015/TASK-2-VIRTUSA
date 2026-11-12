@@ -22,7 +22,8 @@ export class ForbiddenComponent {
   }
 
   public switchToAdmin(): void {
-    this.authService.switchDemoRole('ADMIN');
-    this.router.navigate(['/dashboard']);
+    // Role switching after login is not permitted.
+    // Redirect to login so the user can sign in with a different account.
+    this.authService.logout();
   }
 }

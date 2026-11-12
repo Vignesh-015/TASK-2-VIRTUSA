@@ -1,281 +1,426 @@
-<div class="dashboard-page">
+<div class="dashboard-page" *ngIf="currentUser">
 
-  <!-- ── WELCOME BANNER & QUICK ACTIONS ───────────────────────────────── -->
-  <section class="welcome-header">
-    <div class="welcome-header__left">
-      <div class="date-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        <span>{{ todayString }}</span>
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- 1. ADMIN & HR DASHBOARD VIEW                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="userRole === 'ADMIN' || userRole === 'HR'">
+    <!-- Welcome Header & Quick Action Buttons -->
+    <section class="welcome-header">
+      <div class="welcome-header__left">
+        <div class="date-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>{{ todayString }}</span>
+        </div>
+        <h1 class="welcome-title">Welcome back, {{ currentUser.name }}</h1>
+        <p class="welcome-subtitle">
+          {{ userRole === 'ADMIN' ? 'Executive overview of workforce operations, department allocations, and personnel records.' : 'Human Resources workforce dashboard: staff allocations, onboarding tracking, and directory operations.' }}
+        </p>
       </div>
-      <h1 class="welcome-title">Welcome back, {{ (currentUser$ | async)?.name }}</h1>
-      <p class="welcome-subtitle">Here is a comprehensive summary of your workforce, departments, and personnel metrics today.</p>
-    </div>
 
-    <div class="welcome-header__actions">
-      <button type="button" class="btn btn-secondary" (click)="exportDirectoryCsv()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
+      <div class="welcome-header__actions">
+        <button type="button" class="btn btn-secondary" (click)="exportDirectoryCsv()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export CSV
+        </button>
+
+        <!-- Manage Departments (Admin Only) -->
+        <button *ngIf="userRole === 'ADMIN'"
+                type="button"
+                class="btn btn-secondary"
+                (click)="navigateToDepartments()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"></path>
+            <path d="M3 7v14"></path>
+            <path d="M13 7v14"></path>
+            <path d="M21 7v14"></path>
+            <path d="M2 7h20L12 2z"></path>
+          </svg>
+          Departments
+        </button>
+
+        <!-- Add Employee (Admin & HR) -->
+        <button type="button"
+                class="btn btn-primary"
+                (click)="navigateToEmployees()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Employee
+        </button>
+      </div>
+    </section>
+
+    <!-- 4 Key Stat Cards -->
+    <section class="stats-grid">
+      <!-- Total Workforce -->
+      <app-stat-card
+        title="Total Workforce"
+        [value]="stats.totalEmployees"
+        subtitle="24 active company contracts"
+        trendText="+12% YoY"
+        [trendPositive]="true"
+        [isLoading]="isLoading">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        Export CSV
-      </button>
+      </app-stat-card>
 
-      <button *ngIf="authService.hasRole(['ADMIN', 'HR'])"
-              type="button"
-              class="btn btn-secondary"
-              (click)="navigateToDepartments()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Active Staff -->
+      <app-stat-card
+        title="Active Staff"
+        [value]="stats.activeEmployees"
+        subtitle="83.3% operational engagement"
+        trendText="Engaged"
+        [trendPositive]="true"
+        iconClass="icon-teal"
+        [isLoading]="isLoading">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </app-stat-card>
+
+      <!-- New Joiners -->
+      <app-stat-card
+        title="New Joiners"
+        [value]="stats.newJoinersCount"
+        subtitle="Current onboarding cohort"
+        trendText="Onboarding"
+        [trendPositive]="true"
+        iconClass="icon-purple"
+        [isLoading]="isLoading">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+      </app-stat-card>
+
+      <!-- Departments -->
+      <app-stat-card
+        title="Departments"
+        [value]="stats.totalDepartments"
+        subtitle="6 functional business units"
+        trendText="Operational"
+        [trendPositive]="true"
+        iconClass="icon-amber"
+        [isLoading]="isLoading">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 21h18"></path>
           <path d="M3 7v14"></path>
           <path d="M13 7v14"></path>
           <path d="M21 7v14"></path>
           <path d="M2 7h20L12 2z"></path>
         </svg>
-        Departments
-      </button>
+      </app-stat-card>
+    </section>
 
-      <button *ngIf="authService.hasRole(['ADMIN', 'HR'])"
-              type="button"
-              class="btn btn-primary"
-              (click)="navigateToEmployees()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Add Employee
-      </button>
-    </div>
-  </section>
+    <!-- Analytics Breakdown Row -->
+    <section class="analytics-row">
+      <!-- Department Distribution Card -->
+      <div class="card distribution-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">Employee Distribution by Department</h2>
+            <p class="card-subtitle">Exact headcount allocation across 6 business units (24 staff total)</p>
+          </div>
+          <button *ngIf="userRole === 'ADMIN'" type="button" class="btn btn-sm btn-ghost" (click)="navigateToDepartments()">
+            Departments &rarr;
+          </button>
+        </div>
 
-  <!-- ── 4 KPI STATS GRID ─────────────────────────────────────────────── -->
-  <section class="stats-grid">
-    <!-- Stat 1: Total Employees -->
-    <app-stat-card
-      title="Total Workforce"
-      [value]="stats.totalEmployees"
-      subtitle="Full organizational roster"
-      trendText="+8% YoY"
-      [trendPositive]="true"
-      [isLoading]="isLoading">
-      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    </app-stat-card>
+        <div class="card-body">
+          <!-- Segmented Multi-Color Progress Bar -->
+          <div class="segmented-bar-container">
+            <div class="segmented-bar">
+              <div *ngFor="let dept of stats.departmentBreakdown"
+                   class="bar-segment"
+                   [style.width.%]="dept.percentage"
+                   [style.backgroundColor]="dept.color"
+                   [title]="dept.department + ': ' + dept.count + ' staff (' + dept.percentage + '%)'">
+              </div>
+            </div>
+          </div>
 
-    <!-- Stat 2: Active Employees -->
-    <app-stat-card
-      title="Active Staff"
-      [value]="stats.activeEmployees"
-      subtitle="Currently deployed on projects"
-      trendText="94% Operational"
-      [trendPositive]="true"
-      iconClass="icon-teal"
-      [isLoading]="isLoading">
-      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-    </app-stat-card>
+          <!-- Department Headcount List -->
+          <div class="department-list-items">
+            <div *ngFor="let dept of stats.departmentBreakdown"
+                 class="department-stat-item"
+                 (click)="navigateToEmployees(dept.department)">
+              <div class="dept-info">
+                <span class="dept-dot" [style.backgroundColor]="dept.color"></span>
+                <span class="dept-name">{{ dept.department }}</span>
+              </div>
+              <div class="dept-metrics">
+                <div class="dept-progress-track">
+                  <div class="dept-progress-fill" [style.width.%]="dept.percentage" [style.backgroundColor]="dept.color"></div>
+                </div>
+                <span class="dept-count">{{ dept.count }} staff</span>
+                <span class="dept-pct">{{ dept.percentage }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Stat 3: New Joiners -->
-    <app-stat-card
-      title="New Joiners"
-      [value]="stats.newJoinersThisMonth"
-      subtitle="Joined in recent cohort"
-      trendText="Onboarding Phase"
-      [trendPositive]="true"
-      iconClass="icon-purple"
-      [isLoading]="isLoading">
-      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-      </svg>
-    </app-stat-card>
+      <!-- Workforce Status Overview Card -->
+      <div class="card status-overview-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">Workforce Status Overview</h2>
+            <p class="card-subtitle">Employment state breakdown across personnel</p>
+          </div>
+        </div>
 
-    <!-- Stat 4: Total Departments -->
-    <app-stat-card
-      title="Departments"
-      [value]="stats.totalDepartments"
-      subtitle="Functional business units"
-      trendText="All Operational"
-      [trendPositive]="true"
-      iconClass="icon-amber"
-      [isLoading]="isLoading">
-      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 21h18"></path>
-        <path d="M3 7v14"></path>
-        <path d="M13 7v14"></path>
-        <path d="M21 7v14"></path>
-        <path d="M2 7h20L12 2z"></path>
-      </svg>
-    </app-stat-card>
-  </section>
+        <div class="card-body">
+          <div class="status-summary-pills">
+            <div *ngFor="let st of stats.statusBreakdown" class="status-pill-item">
+              <div class="status-pill-top">
+                <app-status-badge [status]="st.status"></app-status-badge>
+                <span class="status-pill-count">{{ st.count }} staff</span>
+              </div>
+              <div class="status-pill-meter">
+                <div class="status-pill-fill"
+                     [style.width.%]="st.percentage"
+                     [style.backgroundColor]="st.color">
+                </div>
+              </div>
+              <span class="status-pill-ratio">
+                {{ st.percentage }}% of total workforce
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- ── MIDDLE SECTION: CHARTS & WORKFORCE BREAKDOWN ────────────────── -->
-  <section class="analytics-row">
-
-    <!-- Card 1: Department Distribution Visualization -->
-    <div class="card distribution-card">
+    <!-- Recent Employee Additions Table -->
+    <section class="card recent-employees-card">
       <div class="card-header">
         <div class="card-title-group">
-          <h2 class="card-title">Employee Distribution by Department</h2>
-          <p class="card-subtitle">Headcount allocation across business units</p>
+          <h2 class="card-title">Recent Employee Additions</h2>
+          <p class="card-subtitle">Latest personnel added to the company roster</p>
         </div>
-        <button type="button" class="btn btn-sm btn-ghost" (click)="navigateToDepartments()">
-          View Departments &rarr;
+        <button type="button" class="btn btn-sm btn-secondary" (click)="navigateToEmployees()">
+          View Full Directory
         </button>
       </div>
 
-      <div class="card-body">
-        <!-- Multi-segment visual bar -->
-        <div class="segmented-bar-container">
-          <div class="segmented-bar">
-            <div *ngFor="let dept of stats.departmentBreakdown"
-                 class="bar-segment"
-                 [style.width.%]="dept.percentage"
-                 [style.backgroundColor]="dept.color"
-                 [title]="dept.department + ': ' + dept.count + ' (' + dept.percentage + '%)'">
-            </div>
-          </div>
-        </div>
-
-        <!-- Breakdown list items -->
-        <div class="department-list-items">
-          <div *ngFor="let dept of stats.departmentBreakdown"
-               class="department-stat-item"
-               (click)="navigateToEmployees(dept.department)">
-            <div class="dept-info">
-              <span class="dept-dot" [style.backgroundColor]="dept.color"></span>
-              <span class="dept-name">{{ dept.department }}</span>
-            </div>
-            <div class="dept-metrics">
-              <div class="dept-progress-track">
-                <div class="dept-progress-fill" [style.width.%]="dept.percentage" [style.backgroundColor]="dept.color"></div>
-              </div>
-              <span class="dept-count">{{ dept.count }} staff</span>
-              <span class="dept-pct">{{ dept.percentage }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 2: Employment Status Overview -->
-    <div class="card status-overview-card">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h2 class="card-title">Workforce Status Overview</h2>
-          <p class="card-subtitle">Current availability & engagement states</p>
-        </div>
-      </div>
-
-      <div class="card-body">
-        <div class="status-summary-pills">
-          <div *ngFor="let st of stats.statusBreakdown" class="status-pill-item">
-            <div class="status-pill-top">
-              <app-status-badge [status]="st.status"></app-status-badge>
-              <span class="status-pill-count">{{ st.count }}</span>
-            </div>
-            <div class="status-pill-meter">
-              <div class="status-pill-fill"
-                   [style.width.%]="stats.totalEmployees > 0 ? (st.count / stats.totalEmployees * 100) : 0"
-                   [style.backgroundColor]="st.color">
-              </div>
-            </div>
-            <span class="status-pill-ratio">
-              {{ stats.totalEmployees > 0 ? (st.count / stats.totalEmployees * 100 | number:'1.0-0') : 0 }}% of total roster
-            </span>
-          </div>
-        </div>
-
-        <!-- Quick HR Portal Summary Notice -->
-        <div class="portal-info-box">
-          <div class="portal-info-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-          </div>
-          <div class="portal-info-text">
-            <strong>Security & Compliance Guard:</strong> All employee records and personal data are encrypted under RBAC policies.
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── RECENT EMPLOYEE ADDITIONS TABLE ──────────────────────────────── -->
-  <section class="card recent-employees-card">
-    <div class="card-header">
-      <div class="card-title-group">
-        <h2 class="card-title">Recent Employee Additions</h2>
-        <p class="card-subtitle">Latest personnel added to the company roster</p>
-      </div>
-      <button type="button" class="btn btn-sm btn-secondary" (click)="navigateToEmployees()">
-        View Full Directory
-      </button>
-    </div>
-
-    <div class="table-container">
-      <table class="table" aria-label="Recent Employees Directory">
-        <thead>
-          <tr>
-            <th>Employee</th>
-            <th>Employee ID</th>
-            <th>Department</th>
-            <th>Designation</th>
-            <th>Joining Date</th>
-            <th>Status</th>
-            <th class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let emp of stats.recentEmployees">
-            <td>
-              <div class="employee-cell">
-                <app-avatar [src]="emp.avatar" [name]="emp.fullName" size="sm"></app-avatar>
-                <div class="employee-cell-meta">
-                  <span class="employee-name">{{ emp.fullName }}</span>
-                  <span class="employee-email">{{ emp.email }}</span>
+      <div class="table-container">
+        <table class="table" aria-label="Recent Employees Directory">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Employee ID</th>
+              <th>Department</th>
+              <th>Designation</th>
+              <th>Joining Date</th>
+              <th>Status</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emp of stats.recentEmployees">
+              <td>
+                <div class="employee-cell">
+                  <app-avatar [src]="emp.avatar" [name]="emp.fullName" size="sm"></app-avatar>
+                  <div class="employee-cell-meta">
+                    <span class="employee-name">{{ emp.fullName }}</span>
+                    <span class="employee-email">{{ emp.email }}</span>
+                  </div>
                 </div>
+              </td>
+              <td>
+                <span class="employee-id-pill">{{ emp.employeeId }}</span>
+              </td>
+              <td>
+                <span class="department-tag">{{ emp.department }}</span>
+              </td>
+              <td>
+                <span class="designation-text">{{ emp.designation }}</span>
+              </td>
+              <td>
+                <span class="date-text">{{ emp.joiningDate | date:'mediumDate' }}</span>
+              </td>
+              <td>
+                <app-status-badge [status]="emp.status"></app-status-badge>
+              </td>
+              <td class="text-right">
+                <button type="button"
+                        class="btn btn-sm btn-ghost"
+                        (click)="navigateToEmployees()"
+                        title="View Directory">
+                  Details &rarr;
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- 2. EMPLOYEE SELF-SERVICE WORKSPACE DASHBOARD VIEW                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="userRole === 'EMPLOYEE'">
+    <!-- Employee Header -->
+    <section class="welcome-header employee-welcome">
+      <div class="welcome-header__left">
+        <div class="date-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>{{ todayString }}</span>
+        </div>
+        <h1 class="welcome-title">Welcome to your workspace, {{ currentUser.name }}</h1>
+        <p class="welcome-subtitle">
+          Your personal employee portal for managing assignments, leave balances, team collaboration, and personal dossier.
+        </p>
+      </div>
+
+      <div class="welcome-header__actions">
+        <button type="button" class="btn btn-primary" (click)="navigateToProfile()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          View My Profile
+        </button>
+      </div>
+    </section>
+
+    <!-- 4 Employee Personal KPI Cards -->
+    <section class="stats-grid">
+      <app-stat-card
+        title="Annual Leave Balance"
+        [value]="employeeLeaveBalance.annualLeave + ' Days'"
+        subtitle="14 days available to request"
+        trendText="Available"
+        [trendPositive]="true">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </app-stat-card>
+
+      <app-stat-card
+        title="Sick Leave Balance"
+        [value]="employeeLeaveBalance.sickLeave + ' Days'"
+        subtitle="Allocated for calendar year"
+        trendText="Standard"
+        [trendPositive]="true"
+        iconClass="icon-teal">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </app-stat-card>
+
+      <app-stat-card
+        title="Department Team"
+        [value]="currentUser.department || 'Engineering'"
+        subtitle="6 collaborative team members"
+        trendText="Active Cohort"
+        [trendPositive]="true"
+        iconClass="icon-purple">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+      </app-stat-card>
+
+      <app-stat-card
+        title="Annual Review Status"
+        value="Completed"
+        subtitle="Q4 2026 Evaluation"
+        trendText="Exceeds"
+        [trendPositive]="true"
+        iconClass="icon-amber">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+      </app-stat-card>
+    </section>
+
+    <!-- Two-Column Employee Overview -->
+    <section class="analytics-row">
+      <!-- Left: Employment Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">My Employment Overview</h2>
+            <p class="card-subtitle">Official personnel details registered in EmployeeHub</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="emp-overview-grid">
+            <div class="emp-meta-item">
+              <span class="meta-label">Employee ID</span>
+              <span class="meta-val font-mono">{{ currentUser.employeeId || 'EMP-1007' }}</span>
+            </div>
+            <div class="emp-meta-item">
+              <span class="meta-label">Designation</span>
+              <span class="meta-val">{{ currentUser.designation || 'Staff Frontend Architect' }}</span>
+            </div>
+            <div class="emp-meta-item">
+              <span class="meta-label">Department</span>
+              <span class="meta-val">{{ currentUser.department || 'Engineering' }}</span>
+            </div>
+            <div class="emp-meta-item">
+              <span class="meta-label">Office Base</span>
+              <span class="meta-val">{{ currentUser.location || 'Boston, MA (Hybrid)' }}</span>
+            </div>
+            <div class="emp-meta-item">
+              <span class="meta-label">Work Email</span>
+              <span class="meta-val text-blue">{{ currentUser.email }}</span>
+            </div>
+            <div class="emp-meta-item">
+              <span class="meta-label">Direct Phone</span>
+              <span class="meta-val">{{ currentUser.phone || '+1 (555) 890-1234' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Department Teammates -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">My Department Teammates</h2>
+            <p class="card-subtitle">Co-workers in {{ currentUser.department || 'Engineering' }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="teammates-list">
+            <div *ngFor="let mate of employeeTeammates" class="teammate-row">
+              <app-avatar [src]="mate.avatar" [name]="mate.fullName" size="sm"></app-avatar>
+              <div class="teammate-info">
+                <span class="teammate-name">{{ mate.fullName }}</span>
+                <span class="teammate-role">{{ mate.designation }}</span>
               </div>
-            </td>
-            <td>
-              <span class="employee-id-pill">{{ emp.employeeId }}</span>
-            </td>
-            <td>
-              <span class="department-tag">{{ emp.department }}</span>
-            </td>
-            <td>
-              <span class="designation-text">{{ emp.designation }}</span>
-            </td>
-            <td>
-              <span class="date-text">{{ emp.joiningDate | date:'mediumDate' }}</span>
-            </td>
-            <td>
-              <app-status-badge [status]="emp.status"></app-status-badge>
-            </td>
-            <td class="text-right">
-              <button type="button"
-                      class="btn btn-sm btn-ghost"
-                      (click)="navigateToEmployees()"
-                      title="Inspect Profile">
-                Details &rarr;
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+              <app-status-badge [status]="mate.status"></app-status-badge>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
 
 </div>

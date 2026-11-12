@@ -4,7 +4,7 @@ import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { User, UserRole } from '../../core/models/user.model';
+import { User } from '../../core/models/user.model';
 import { AppNotification } from '../../core/models/notification.model';
 
 interface BreadcrumbItem {
@@ -22,14 +22,12 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
   public sidebarCollapsed: boolean = false;
   public notificationsOpen: boolean = false;
   public profileMenuOpen: boolean = false;
-  public demoRoleSwitcherOpen: boolean = false;
 
   public currentUser$!: Observable<User | null>;
   public notifications$!: Observable<AppNotification[]>;
 
   public pageTitle: string = 'Dashboard';
   public breadcrumbs: BreadcrumbItem[] = [{ label: 'EmployeeHub' }, { label: 'Dashboard' }];
-  public globalSearch: string = '';
 
   private routerSub?: Subscription;
 
@@ -71,7 +69,7 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
       this.pageTitle = 'Department Management';
       this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'Departments' }];
     } else if (cleanUrl.startsWith('/profile')) {
-      this.pageTitle = 'Employee Profile';
+      this.pageTitle = 'My Profile';
       this.breadcrumbs = [{ label: 'EmployeeHub' }, { label: 'My Profile' }];
     } else if (cleanUrl.startsWith('/forbidden')) {
       this.pageTitle = 'Access Denied';
@@ -98,7 +96,6 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
     this.notificationsOpen = !this.notificationsOpen;
     if (this.notificationsOpen) {
       this.profileMenuOpen = false;
-      this.demoRoleSwitcherOpen = false;
     }
   }
 
@@ -106,30 +103,6 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
     this.profileMenuOpen = !this.profileMenuOpen;
     if (this.profileMenuOpen) {
       this.notificationsOpen = false;
-      this.demoRoleSwitcherOpen = false;
-    }
-  }
-
-  public toggleRoleSwitcher(): void {
-    this.demoRoleSwitcherOpen = !this.demoRoleSwitcherOpen;
-    if (this.demoRoleSwitcherOpen) {
-      this.notificationsOpen = false;
-      this.profileMenuOpen = false;
-    }
-  }
-
-  public switchDemoRole(role: UserRole): void {
-    this.authService.switchDemoRole(role);
-    this.demoRoleSwitcherOpen = false;
-    this.profileMenuOpen = false;
-    this.notificationService.info(`Switched view to demo account: ${role}`, 'Role Switched');
-  }
-
-  public onGlobalSearch(event: Event): void {
-    event.preventDefault();
-    if (this.globalSearch.trim()) {
-      this.router.navigate(['/employees'], { queryParams: { q: this.globalSearch.trim() } });
-      this.globalSearch = '';
     }
   }
 
@@ -144,7 +117,6 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
     if (!target.closest('.header-dropdown-container')) {
       this.notificationsOpen = false;
       this.profileMenuOpen = false;
-      this.demoRoleSwitcherOpen = false;
     }
   }
 }

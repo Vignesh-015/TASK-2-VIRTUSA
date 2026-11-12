@@ -7,9 +7,9 @@
   <aside class="sidebar" aria-label="Portal Navigation">
     <!-- Brand Logo -->
     <div class="sidebar__brand">
-      <a routerLink="/" class="brand-link">
+      <a routerLink="/dashboard" class="brand-link">
         <div class="brand-logo-icon">
-          <!-- Distinctive EmployeeHub People & Connection Icon -->
+          <!-- Distinctive EmployeeHub Emblem -->
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="24" height="24" rx="6" fill="#2563EB"/>
             <circle cx="9" cy="8" r="3" fill="#FFFFFF"/>
@@ -20,7 +20,7 @@
         </div>
         <div class="brand-text" *ngIf="!sidebarCollapsed">
           <span class="brand-title">Employee<span class="brand-accent">Hub</span></span>
-          <span class="brand-badge">HR PORTAL</span>
+          <span class="brand-badge">ENTERPRISE HR</span>
         </div>
       </a>
       <button type="button" class="btn-sidebar-toggle" (click)="toggleCollapseSidebar()" aria-label="Collapse sidebar">
@@ -30,13 +30,13 @@
       </button>
     </div>
 
-    <!-- Main Navigation Links -->
+    <!-- Main Navigation Links (Strictly Role-Based) -->
     <nav class="sidebar__nav">
-      <div class="nav-section-label" *ngIf="!sidebarCollapsed">MAIN MENU</div>
+      <div class="nav-section-label" *ngIf="!sidebarCollapsed">NAVIGATION</div>
 
       <ul class="nav-list">
-        <!-- Dashboard (Admin & HR) -->
-        <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
+        <!-- Dashboard: Visible to all authenticated roles -->
+        <li>
           <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
             <span class="nav-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
           </a>
         </li>
 
-        <!-- Employees (Admin & HR) -->
+        <!-- Employees: Visible strictly to ADMIN & HR only -->
         <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
           <a routerLink="/employees" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
             <span class="nav-icon">
@@ -65,7 +65,7 @@
           </a>
         </li>
 
-        <!-- Departments (Admin & HR) -->
+        <!-- Departments: Visible strictly to ADMIN & HR only -->
         <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
           <a routerLink="/departments" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
             <span class="nav-icon">
@@ -81,7 +81,7 @@
           </a>
         </li>
 
-        <!-- My Profile (All Roles) -->
+        <!-- My Profile: Visible to all roles -->
         <li>
           <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
             <span class="nav-icon">
@@ -95,17 +95,6 @@
         </li>
       </ul>
     </nav>
-
-    <!-- Role Clearance Info Box (when expanded) -->
-    <div class="sidebar__role-box" *ngIf="!sidebarCollapsed && (currentUser$ | async) as user">
-      <div class="role-box-header">
-        <span class="role-indicator-dot" [ngClass]="user.role.toLowerCase()"></span>
-        <span class="role-box-label">{{ user.role }} ACCESS</span>
-      </div>
-      <p class="role-box-desc" *ngIf="user.role === 'ADMIN'">Full administration clearance: Add, edit, delete records & departments.</p>
-      <p class="role-box-desc" *ngIf="user.role === 'HR'">People Operations clearance: Employee directory management & department view.</p>
-      <p class="role-box-desc" *ngIf="user.role === 'EMPLOYEE'">Self-service portal: Personal profile & directory view.</p>
-    </div>
 
     <!-- Sidebar Bottom Footer -->
     <div class="sidebar__footer">
@@ -126,7 +115,7 @@
     <!-- ── TOP NAVIGATION BAR ────────────────────────────────────────── -->
     <header class="topbar">
       <div class="topbar__left">
-        <!-- Mobile Hamburger -->
+        <!-- Mobile Hamburger Toggle -->
         <button type="button" class="btn-hamburger" (click)="toggleMobileSidebar()" aria-label="Toggle navigation drawer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="3" y1="6"  x2="21" y2="6"/>
@@ -150,55 +139,8 @@
         </div>
       </div>
 
-      <!-- Center: Quick Search Bar -->
-      <div class="topbar__center">
-        <form class="search-form" (submit)="onGlobalSearch($event)">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text"
-                   class="search-input"
-                   placeholder="Search employees by name, email, department..."
-                   [(ngModel)]="globalSearch"
-                   name="globalSearch"
-                   aria-label="Search employee directory" />
-            <span class="search-badge">Press Enter</span>
-          </div>
-        </form>
-      </div>
-
-      <!-- Right: Role Switcher Demo, Notifications, User Avatar & Menu -->
+      <!-- Right: Notifications & User Avatar Menu -->
       <div class="topbar__right">
-
-        <!-- Quick Role Switcher Pill (Crucial for Internship Demo!) -->
-        <div class="header-dropdown-container demo-role-switch-container">
-          <div class="role-pill-group">
-            <span class="role-pill-label">Demo Role:</span>
-            <button type="button"
-                    class="role-pill-btn"
-                    [class.active]="authService.currentRole === 'ADMIN'"
-                    (click)="switchDemoRole('ADMIN')"
-                    title="Switch to Admin role">
-              Admin
-            </button>
-            <button type="button"
-                    class="role-pill-btn"
-                    [class.active]="authService.currentRole === 'HR'"
-                    (click)="switchDemoRole('HR')"
-                    title="Switch to HR Specialist role">
-              HR
-            </button>
-            <button type="button"
-                    class="role-pill-btn"
-                    [class.active]="authService.currentRole === 'EMPLOYEE'"
-                    (click)="switchDemoRole('EMPLOYEE')"
-                    title="Switch to Employee self-service role">
-              Employee
-            </button>
-          </div>
-        </div>
 
         <!-- Notification Bell & Dropdown -->
         <div class="header-dropdown-container">
@@ -220,7 +162,7 @@
           <div class="dropdown-panel notifications-panel" *ngIf="notificationsOpen">
             <div class="panel-header">
               <span class="panel-title">Notifications</span>
-              <button type="button" class="btn-text-sm" (click)="notificationService.markAllAsRead()">Mark all as read</button>
+              <button type="button" class="btn-text-sm" (click)="notificationService.markAllAsRead()">Mark all read</button>
             </div>
             <div class="panel-list">
               <div *ngFor="let notif of notifications$ | async"
@@ -277,13 +219,15 @@
                   My Profile
                 </a>
               </li>
-              <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
-                <a routerLink="/employees" (click)="profileMenuOpen = false" class="dropdown-menu-item">
+              <li>
+                <a routerLink="/dashboard" (click)="profileMenuOpen = false" class="dropdown-menu-item">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
                   </svg>
-                  Employee Directory
+                  Dashboard
                 </a>
               </li>
             </ul>

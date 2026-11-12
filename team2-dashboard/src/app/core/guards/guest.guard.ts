@@ -4,16 +4,13 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * guestGuard prevents logged-in users from accessing public authentication pages (login/register).
- * Redirects them to /dashboard or /profile depending on their role.
+ * Redirects authenticated users directly to /dashboard.
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.isLoggedIn()) {
-    if (authService.currentRole === 'EMPLOYEE') {
-      return router.createUrlTree(['/profile']);
-    }
     return router.createUrlTree(['/dashboard']);
   }
 

@@ -1,6 +1,6 @@
 .auth-card-wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: 500px;
   margin: 0 auto;
 }
 
@@ -14,26 +14,63 @@
 
 .auth-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
   .auth-brand-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .auth-title {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--color-primary-navy);
     letter-spacing: -0.02em;
+
+    .text-blue {
+      color: var(--color-primary-blue);
+    }
   }
 
   .auth-subtitle {
     font-size: 13px;
     color: var(--color-text-muted);
     margin-top: 4px;
+  }
+}
+
+/* Tab Bar */
+.auth-tab-bar {
+  display: flex;
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 22px;
+  border: 1px solid var(--color-border);
+
+  .auth-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+
+    &:hover:not(.active) {
+      color: var(--color-text-main);
+    }
+
+    &.active {
+      background: #FFFFFF;
+      color: var(--color-primary-blue);
+      box-shadow: var(--shadow-xs);
+    }
   }
 }
 
@@ -46,10 +83,10 @@
   font-size: 13px;
   margin-bottom: 18px;
 
-  &--info {
-    background-color: var(--color-info-bg);
-    color: var(--color-info-text);
-    border: 1px solid var(--color-info-border);
+  &--success {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
   }
 
   &--warning {
@@ -68,12 +105,6 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-}
-
-.password-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .password-input-group {
@@ -108,7 +139,6 @@
 .form-row-remember {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 20px;
 
   .checkbox-label {
@@ -155,8 +185,75 @@
   to { transform: rotate(360deg); }
 }
 
-/* ─── Demo Credentials Section ───────────────────────────────────────────── */
-.demo-login-section {
+/* ─── Role Choice Grid (Sign Up) ─────────────────────────────────────────── */
+.role-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+
+  .role-choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    background: #FFFFFF;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+
+    .role-choice-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-heading);
+    }
+
+    .role-choice-desc {
+      font-size: 10px;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    &:hover:not(.selected) {
+      border-color: #CBD5E1;
+      background-color: #F8FAFC;
+    }
+
+    &.selected {
+      border-color: var(--color-primary-blue);
+      background-color: var(--color-primary-blue-light);
+
+      .role-choice-title {
+        color: var(--color-primary-blue);
+      }
+    }
+  }
+}
+
+.switch-tab-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 16px;
+
+  .btn-link-inline {
+    background: none;
+    border: none;
+    color: var(--color-primary-blue);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ─── Quick Demo Buttons (Sign In page only) ─────────────────────────────── */
+.demo-section {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px dashed var(--color-border);
@@ -172,7 +269,7 @@
       letter-spacing: 0.05em;
       color: var(--color-primary-blue);
       background-color: var(--color-primary-blue-light);
-      padding: 3px 8px;
+      padding: 3px 10px;
       border-radius: var(--radius-full);
     }
   }
@@ -190,7 +287,7 @@
     gap: 8px;
   }
 
-  .demo-role-card {
+  .demo-card {
     text-align: left;
     padding: 10px 14px;
     background-color: #F8FAFC;
@@ -205,33 +302,33 @@
       box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
       transform: translateY(-1px);
 
-      .demo-btn-action {
+      .demo-card-action {
         color: var(--color-primary-blue-hover);
         transform: translateX(2px);
       }
     }
 
-    .demo-role-header {
+    .demo-card-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 3px;
     }
 
-    .demo-btn-action {
+    .demo-card-action {
       font-size: 11px;
       font-weight: 600;
       color: var(--color-primary-blue);
       transition: transform var(--transition-fast);
     }
 
-    .demo-role-name {
+    .demo-card-name {
       font-size: 13px;
       font-weight: 600;
       color: var(--color-text-heading);
     }
 
-    .demo-role-desc {
+    .demo-card-info {
       font-size: 11px;
       color: var(--color-text-muted);
       margin-top: 1px;

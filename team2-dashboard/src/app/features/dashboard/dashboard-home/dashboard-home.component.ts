@@ -5,7 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DepartmentService } from '../../../core/services/department.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { User } from '../../../core/models/user.model';
+import { User, UserRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
 
 @Component({
@@ -15,21 +15,30 @@ import { Employee } from '../../../core/models/employee.model';
 })
 export class DashboardHomeComponent implements OnInit {
   public currentUser$!: Observable<User | null>;
+  public currentUser: User | null = null;
+  public userRole: UserRole = 'EMPLOYEE';
   public isLoading: boolean = true;
   public todayString: string = '';
 
+  // Admin & HR metrics
   public stats = {
-    totalEmployees: 0,
-    activeEmployees: 0,
-    newJoinersThisMonth: 0,
-    totalDepartments: 0,
+    totalEmployees: 24,
+    activeEmployees: 20,
+    newJoinersCount: 2,
+    totalDepartments: 6,
     departmentBreakdown: [] as { department: string; count: number; percentage: number; color?: string }[],
-    statusBreakdown: [] as { status: string; label: string; count: number; color: string }[],
+    statusBreakdown: [] as { status: string; label: string; count: number; percentage: number; color: string }[],
     recentEmployees: [] as Employee[]
   };
 
-  // Add Employee Modal state
-  public isAddEmployeeModalOpen: boolean = false;
+  // Employee workspace metrics
+  public employeeTeammates: Employee[] = [];
+  public employeeLeaveBalance = {
+    annualLeave: 14,
+    sickLeave: 5,
+    remoteDaysThisMonth: 8,
+    performanceScore: 'Exceeds Expectations'
+  };
 
   constructor(
     public authService: AuthService,
@@ -48,21 +57,44 @@ export class DashboardHomeComponent implements OnInit {
       year: 'numeric'
     }).format(new Date());
 
-    this.loadDashboardData();
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.userRole = user.role;
+        this.loadDashboardData();
+      }
+    });
   }
 
   public loadDashboardData(): void {
     this.isLoading = true;
-    this.employeeService.getDashboardStats().subscribe({
-      next: (data) => {
-        this.stats = data;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-        this.notificationService.error('Failed to load dashboard metrics');
-      }
-    });
+
+    if (this.userRole === 'ADMIN' || this.userRole === 'HR') {
+      this.employeeService.getDashboardStats().subscribe({
+        next: (data) => {
+          this.stats = data;
+          this.isLoading = false;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.notificationService.error('Failed to load dashboard metrics.');
+        }
+      });
+    } else {
+      // Employee Workspace: load teammates in same department
+      const userDept = this.currentUser?.department || 'Engineering';
+      this.employeeService.getAllEmployees().subscribe({
+        next: (all) => {
+          this.employeeTeammates = all
+            .filter(e => e.department.toLowerCase() === userDept.toLowerCase() && e.email !== this.currentUser?.email)
+            .slice(0, 5);
+          this.isLoading = false;
+        },
+        error: () => {
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   public navigateToEmployees(dept?: string): void {
@@ -75,6 +107,10 @@ export class DashboardHomeComponent implements OnInit {
 
   public navigateToDepartments(): void {
     this.router.navigate(['/departments']);
+  }
+
+  public navigateToProfile(): void {
+    this.router.navigate(['/profile']);
   }
 
   public exportDirectoryCsv(): void {

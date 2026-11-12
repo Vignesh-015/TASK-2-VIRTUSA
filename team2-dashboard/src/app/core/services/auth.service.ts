@@ -22,6 +22,7 @@ export class AuthService {
   private readonly TOKEN_KEY = 'employeehub_token';
   private readonly USER_KEY = 'employeehub_user';
   private readonly REMEMBER_KEY = 'employeehub_remember_email';
+  private readonly REGISTERED_USERS_KEY = 'employeehub_registered_users';
 
   private sessionTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -38,8 +39,8 @@ export class AuthService {
         designation: 'VP of Engineering & Portal Admin',
         phone: '+1 (555) 234-5678',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        joinDate: '2021-03-15',
-        location: 'New York, NY',
+        joinDate: '2023-03-15',
+        location: 'New York, NY (Hybrid)',
         status: 'ACTIVE'
       },
       password: 'admin123'
@@ -55,8 +56,8 @@ export class AuthService {
         designation: 'Head of People Operations',
         phone: '+1 (555) 345-6789',
         avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-        joinDate: '2021-08-10',
-        location: 'San Francisco, CA',
+        joinDate: '2023-08-10',
+        location: 'San Francisco, CA (On-site)',
         status: 'ACTIVE'
       },
       password: 'hr123'
@@ -73,7 +74,7 @@ export class AuthService {
         phone: '+1 (555) 890-1234',
         avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
         joinDate: '2023-04-11',
-        location: 'Boston, MA',
+        location: 'Boston, MA (Hybrid)',
         status: 'ACTIVE'
       },
       password: 'emp123'
@@ -129,6 +130,10 @@ export class AuthService {
     return allowed.includes(this.currentUser.role);
   }
 
+  /**
+   * Restores an active session from localStorage if a valid, unexpired token exists.
+   * If no valid token is found, user is explicitly set to null (unauthenticated).
+   */
   private restoreSession(): void {
     const token = this.getToken();
     const storedUser = localStorage.getItem(this.USER_KEY);
@@ -142,21 +147,12 @@ export class AuthService {
         this.logout();
       }
     } else {
-      // Default to ADMIN for smooth evaluator onboarding if no previous session
-      this.loginWithDemoAccount('ADMIN');
+      // Unauthenticated state
+      this.clearSessionTimer();
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+      this.currentUserSubject.next(null);
     }
-  }
-
-  public register(request: RegisterRequest): Observable<{ message: string }> {
-    if (environment.useMockApi) {
-      return of({ message: 'Registration successful.' }).pipe(delay(300));
-    }
-    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/register`, request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        const message = error.error?.message || 'Registration failed. Please try again.';
-        return throwError(() => new Error(message));
-      })
-    );
   }
 
   public login(request: LoginRequest): Observable<LoginResponse> {
@@ -181,29 +177,24 @@ export class AuthService {
     );
   }
 
+  public register(request: RegisterRequest): Observable<{ message: string; user: User }> {
+    if (environment.useMockApi) {
+      return this.mockRegister(request);
+    }
+
+    return this.http.post<{ message: string; user: User }>(`${environment.apiUrl}/auth/register`, request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        const message = error.error?.message || 'Registration failed. Please try again.';
+        return throwError(() => new Error(message));
+      })
+    );
+  }
+
   public loginWithDemoAccount(role: UserRole): Observable<LoginResponse> {
     const account = this.demoAccounts[role];
     const token = this.generateMockToken(account.user);
     this.saveSession(token, account.user);
     return of({ token, user: account.user }).pipe(delay(200));
-  }
-
-  public switchDemoRole(role: UserRole): void {
-    const account = this.demoAccounts[role];
-    const token = this.generateMockToken(account.user);
-    this.saveSession(token, account.user);
-
-    // If switched to EMPLOYEE and currently on an admin/hr route, redirect to profile
-    if (role === 'EMPLOYEE') {
-      const currentUrl = this.router.url;
-      if (currentUrl.includes('/dashboard') || currentUrl.includes('/employees') || currentUrl.includes('/departments') || currentUrl.includes('/forbidden')) {
-        this.router.navigate(['/profile']);
-      }
-    } else {
-      if (this.router.url.includes('/forbidden')) {
-        this.router.navigate(['/dashboard']);
-      }
-    }
   }
 
   public updateProfile(updates: Partial<User>): void {
@@ -218,7 +209,7 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/login']);
   }
 
   private saveSession(token: string, user: User): void {
@@ -255,34 +246,71 @@ export class AuthService {
     const email = request.email.trim().toLowerCase();
     const password = request.password;
 
-    // Find in demo accounts
+    // Check predefined demo accounts
     for (const roleKey of Object.keys(this.demoAccounts) as UserRole[]) {
       const acc = this.demoAccounts[roleKey];
       if (acc.user.email.toLowerCase() === email && acc.password === password) {
         const token = this.generateMockToken(acc.user);
         this.saveSession(token, acc.user);
-        return of({ token, user: acc.user }).pipe(delay(350));
+        return of({ token, user: acc.user }).pipe(delay(300));
       }
     }
 
-    // Generic fallback for any email with correct test pattern
-    if (email.includes('@') && password.length >= 6) {
-      const role: UserRole = email.includes('admin') ? 'ADMIN' : (email.includes('hr') ? 'HR' : 'EMPLOYEE');
-      const user: User = {
-        id: 'usr-' + Math.random().toString(36).substring(2, 7),
-        name: email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()),
-        email,
-        role,
-        department: role === 'HR' ? 'Human Resources' : 'Engineering',
-        designation: role === 'ADMIN' ? 'System Administrator' : (role === 'HR' ? 'HR Specialist' : 'Software Engineer'),
-        status: 'ACTIVE'
-      };
-      const token = this.generateMockToken(user);
-      this.saveSession(token, user);
-      return of({ token, user }).pipe(delay(350));
+    // Check newly registered users
+    const registeredUsers = this.getRegisteredUsers();
+    const found = registeredUsers.find(u => u.user.email.toLowerCase() === email && u.password === password);
+    if (found) {
+      const token = this.generateMockToken(found.user);
+      this.saveSession(token, found.user);
+      return of({ token, user: found.user }).pipe(delay(300));
     }
 
-    return throwError(() => new Error('Invalid email or password. You can use one of the Quick Demo buttons below.'));
+    return throwError(() => new Error('Invalid email or password. Use one of the Demo Accounts or click Create Account to sign up.'));
+  }
+
+  private mockRegister(request: RegisterRequest): Observable<{ message: string; user: User }> {
+    const email = request.email.trim().toLowerCase();
+    const registeredUsers = this.getRegisteredUsers();
+
+    // Check if email already exists
+    const existsInDemo = Object.values(this.demoAccounts).some(acc => acc.user.email.toLowerCase() === email);
+    const existsInCustom = registeredUsers.some(u => u.user.email.toLowerCase() === email);
+
+    if (existsInDemo || existsInCustom) {
+      return throwError(() => new Error('An account with this email address already exists.'));
+    }
+
+    const count = registeredUsers.length + 1020;
+    const newUser: User = {
+      id: 'usr-' + Math.random().toString(36).substring(2, 9),
+      employeeId: `EMP-${count}`,
+      name: request.name.trim(),
+      email,
+      role: request.role,
+      department: request.department || (request.role === 'HR' ? 'Human Resources' : 'Engineering'),
+      designation: request.role === 'ADMIN' ? 'Portal Administrator' : (request.role === 'HR' ? 'HR Specialist' : 'Software Engineer'),
+      phone: '+1 (555) 492-8811',
+      joinDate: new Date().toISOString().slice(0, 10),
+      location: 'New York, NY (Hybrid)',
+      status: 'ACTIVE'
+    };
+
+    registeredUsers.push({ user: newUser, password: request.password });
+    localStorage.setItem(this.REGISTERED_USERS_KEY, JSON.stringify(registeredUsers));
+
+    return of({ message: 'Account created successfully! You can now sign in.', user: newUser }).pipe(delay(300));
+  }
+
+  private getRegisteredUsers(): MockAccount[] {
+    const raw = localStorage.getItem(this.REGISTERED_USERS_KEY);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   }
 
   private generateMockToken(user: User): string {

@@ -11,25 +11,35 @@ import { guestGuard }                from './core/guards/guest.guard';
 import { roleMatchGuard }            from './core/guards/role.guard';
 
 const routes: Routes = [
-  // Default redirect – send bare "/" to dashboard
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  // 1. Default landing page MUST be /login
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Public authentication routes (login)
+  // 2. Public authentication pages (login & register)
   {
-    path: 'auth',
+    path: '',
     component: PublicLayoutComponent,
     canActivate: [guestGuard],
     canActivateChild: [guestGuard],
     children: [
       {
-        path: '',
+        path: 'login',
         loadChildren: () =>
           import('./features/auth/auth.module').then(m => m.AuthModule)
+      },
+      {
+        path: 'register',
+        loadChildren: () =>
+          import('./features/auth/auth.module').then(m => m.AuthModule)
+      },
+      {
+        path: 'auth',
+        redirectTo: 'login',
+        pathMatch: 'prefix'
       }
     ]
   },
 
-  // Protected application routes sharing the topbar + collapsible sidebar layout
+  // 3. Protected portal layout guarded by authGuard & authChildGuard
   {
     path: '',
     component: AppLayoutComponent,
@@ -39,7 +49,7 @@ const routes: Routes = [
       {
         path: 'dashboard',
         canMatch: [roleMatchGuard],
-        data: { roles: ['ADMIN', 'HR'] },
+        data: { roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
         loadChildren: () =>
           import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
       },
@@ -69,7 +79,7 @@ const routes: Routes = [
     ]
   },
 
-  // 404 handler
+  // 4. Not Found Handlers
   { path: 'not-found', component: NotFoundComponent },
   { path: '**', component: NotFoundComponent }
 ];

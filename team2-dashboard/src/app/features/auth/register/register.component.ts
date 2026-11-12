@@ -91,11 +91,11 @@ export class RegisterComponent implements OnInit {
     this.isLoading = true;
     const { name, email, password } = this.registerForm.value;
 
-    this.authService.register({ name, email, password }).subscribe({
+    this.authService.register({ name, email, password, role: 'EMPLOYEE' }).subscribe({
       next: () => {
         this.isLoading = false;
-        // On success: navigate to /auth/login with query param registered=true
-        this.router.navigate(['/auth/login'], { queryParams: { registered: 'true' } });
+        // On success: navigate to /login
+        this.router.navigate(['/login']);
       },
       error: (err: Error) => {
         this.isLoading = false;

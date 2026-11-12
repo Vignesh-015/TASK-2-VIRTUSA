@@ -1,4 +1,4 @@
-import { User } from './user.model';
+import { User, UserRole } from './user.model';
 
 export interface LoginRequest {
   email: string;
@@ -10,7 +10,8 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role?: 'ADMIN' | 'HR' | 'EMPLOYEE';
+  role: UserRole;
+  department?: string;
 }
 
 export interface LoginResponse {

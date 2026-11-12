@@ -1,24 +1,24 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, map, tap } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 import { Department } from '../models/department.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DepartmentService {
-  private readonly STORAGE_KEY = 'employeehub_departments';
+  private readonly STORAGE_KEY = 'employeehub_departments_v2';
 
   private readonly initialDepartments: Department[] = [
     {
       id: 'dept-1',
       code: 'ENG',
       name: 'Engineering',
-      description: 'Core software engineering, platform architecture, security, and cloud infrastructure.',
+      description: 'Core platform engineering, cloud infrastructure, security architectures, and microservices.',
       headName: 'Alexander Hayes',
       headEmail: 'alexander.hayes@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 48,
+      employeeCount: 6,
       budget: '$2.4M',
       location: 'Building A, Floor 4',
       color: '#2563EB'
@@ -27,12 +27,12 @@ export class DepartmentService {
       id: 'dept-2',
       code: 'PRD',
       name: 'Product & Design',
-      description: 'Product strategy, user experience research, UI design system, and product lifecycle.',
+      description: 'Product discovery, UX research, enterprise design systems, and product lifecycle roadmap.',
       headName: 'Marcus Chen',
       headEmail: 'marcus.chen@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 22,
-      budget: '$1.1M',
+      employeeCount: 4,
+      budget: '$1.2M',
       location: 'Building A, Floor 3',
       color: '#0D9488'
     },
@@ -40,11 +40,11 @@ export class DepartmentService {
       id: 'dept-3',
       code: 'MKT',
       name: 'Marketing',
-      description: 'Brand communications, digital marketing campaigns, events, and enterprise demand gen.',
+      description: 'Brand positioning, global communications, product marketing, and demand generation.',
       headName: 'Elena Rostova',
       headEmail: 'elena.rostova@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 18,
+      employeeCount: 4,
       budget: '$950K',
       location: 'Building B, Floor 2',
       color: '#D97706'
@@ -53,11 +53,11 @@ export class DepartmentService {
       id: 'dept-4',
       code: 'HRD',
       name: 'Human Resources',
-      description: 'Talent acquisition, employee experience, compensation & benefits, and HR compliance.',
+      description: 'People experience, talent acquisition, total rewards, and compliance operations.',
       headName: 'Sarah Jenkins',
       headEmail: 'sarah.jenkins@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 14,
+      employeeCount: 3,
       budget: '$680K',
       location: 'Building A, Floor 2',
       color: '#7C3AED'
@@ -66,12 +66,12 @@ export class DepartmentService {
       id: 'dept-5',
       code: 'FIN',
       name: 'Finance & Operations',
-      description: 'Corporate financial planning, accounting, facilities management, and legal governance.',
+      description: 'Corporate financial planning, treasury, facilities management, and audit governance.',
       headName: 'David Kalu',
       headEmail: 'david.kalu@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 16,
-      budget: '$1.8M',
+      employeeCount: 3,
+      budget: '$1.5M',
       location: 'Building B, Floor 4',
       color: '#059669'
     },
@@ -79,12 +79,12 @@ export class DepartmentService {
       id: 'dept-6',
       code: 'SLS',
       name: 'Sales & Partnerships',
-      description: 'Enterprise account executives, business development, client success, and partner ecosystem.',
+      description: 'Enterprise account growth, global strategic alliances, client success, and sales enablement.',
       headName: 'Jessica Morales',
       headEmail: 'jessica.morales@employeehub.com',
       headAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-      employeeCount: 24,
-      budget: '$1.5M',
+      employeeCount: 4,
+      budget: '$1.8M',
       location: 'Building B, Floor 3',
       color: '#EA580C'
     }
@@ -101,7 +101,7 @@ export class DepartmentService {
       try {
         return JSON.parse(raw);
       } catch {
-        // fallback
+        // fallback to seed
       }
     }
     this.persist(this.initialDepartments);
@@ -113,12 +113,12 @@ export class DepartmentService {
   }
 
   public getDepartments(): Observable<Department[]> {
-    return of(this.departmentsSubject.value).pipe(delay(150));
+    return of(this.departmentsSubject.value).pipe(delay(100));
   }
 
   public getDepartmentById(id: string): Observable<Department | undefined> {
-    const found = this.departmentsSubject.value.find(d => d.id === id);
-    return of(found).pipe(delay(100));
+    const found = this.departmentsSubject.value.find(d => d.id === id || d.code.toLowerCase() === id.toLowerCase());
+    return of(found).pipe(delay(80));
   }
 
   public addDepartment(dept: Omit<Department, 'id'>): Observable<Department> {
@@ -127,10 +127,10 @@ export class DepartmentService {
       id: 'dept-' + (this.departmentsSubject.value.length + 1) + '-' + Math.random().toString(36).substring(2, 6),
       employeeCount: dept.employeeCount || 0
     };
-    const updated = [newDept, ...this.departmentsSubject.value];
+    const updated = [...this.departmentsSubject.value, newDept];
     this.departmentsSubject.next(updated);
     this.persist(updated);
-    return of(newDept).pipe(delay(200));
+    return of(newDept).pipe(delay(150));
   }
 
   public updateDepartment(id: string, updates: Partial<Department>): Observable<Department> {
@@ -144,7 +144,7 @@ export class DepartmentService {
     updatedList[index] = updatedDept;
     this.departmentsSubject.next(updatedList);
     this.persist(updatedList);
-    return of(updatedDept).pipe(delay(200));
+    return of(updatedDept).pipe(delay(150));
   }
 
   public deleteDepartment(id: string): Observable<boolean> {
@@ -155,7 +155,7 @@ export class DepartmentService {
     }
     this.departmentsSubject.next(filtered);
     this.persist(filtered);
-    return of(true).pipe(delay(200));
+    return of(true).pipe(delay(150));
   }
 
   public recalculateHeadcounts(deptCountMap: Record<string, number>): void {
@@ -168,4 +168,3 @@ export class DepartmentService {
     this.persist(updated);
   }
 }
-
