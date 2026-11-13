@@ -1,0 +1,39 @@
+<section class="activity-card" aria-label="Recent Activity">
+  <h2 class="section-heading">Recent Activity</h2>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="isLoading" class="timeline-loading" aria-hidden="true">
+    <div *ngFor="let placeholder of [1, 2, 3, 4, 5]" class="timeline-placeholder-item">
+      <div class="timeline-marker timeline-marker--skeleton"></div>
+      <div class="timeline-placeholder-content">
+        <div class="placeholder-line placeholder-line--message"></div>
+        <div class="placeholder-line placeholder-line--meta"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loaded timeline -->
+  <div *ngIf="!isLoading">
+    <ol *ngIf="activities && activities.length > 0; else emptyState" class="timeline-list">
+      <li *ngFor="let item of activities" class="timeline-item">
+        <span class="timeline-marker"
+              [ngClass]="'timeline-marker--' + item.type.toLowerCase()"
+              [attr.aria-label]="item.type"
+              role="img">
+        </span>
+        <div class="timeline-content">
+          <p class="timeline-message">{{ item.message }}</p>
+          <p class="timeline-meta">
+            <span class="timeline-actor">{{ item.actor }}</span>
+            <span class="timeline-divider" aria-hidden="true">&middot;</span>
+            <time [attr.datetime]="item.timestamp">{{ item.timestamp | timeAgo }}</time>
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <ng-template #emptyState>
+      <p class="timeline-empty">No recent activity.</p>
+    </ng-template>
+  </div>
+</section>

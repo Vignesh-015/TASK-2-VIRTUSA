@@ -1,0 +1,29 @@
+<section class="department-card" aria-label="Department Headcount">
+  <h2 class="section-heading">Department Headcount</h2>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="isLoading" class="dept-list" aria-hidden="true">
+    <div *ngFor="let placeholder of [1, 2, 3, 4, 5, 6, 7]" class="dept-row dept-row--placeholder">
+      <div class="placeholder-name"></div>
+      <div class="dept-bar-track">
+        <div class="placeholder-bar"></div>
+      </div>
+      <div class="placeholder-count"></div>
+    </div>
+  </div>
+
+  <!-- Loaded content -->
+  <div *ngIf="!isLoading" class="dept-list">
+    <div *ngFor="let item of displayItems" class="dept-row">
+      <span class="dept-name">{{ item.department }}</span>
+      <div class="dept-bar-track" aria-hidden="true">
+        <div class="dept-bar-fill" [style.width.%]="item.percentage"></div>
+      </div>
+      <span class="dept-count">{{ item.count }}</span>
+    </div>
+
+    <div *ngIf="displayItems.length === 0" class="dept-empty">
+      No department records available.
+    </div>
+  </div>
+</section>

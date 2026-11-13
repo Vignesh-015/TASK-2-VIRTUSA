@@ -1,0 +1,49 @@
+.notfound-container {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.notfound-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 44px 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.notfound-code {
+  font-family: var(--font-heading);
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-primary-blue);
+  letter-spacing: -0.04em;
+}
+
+.notfound-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary-navy);
+  margin: 0;
+}
+
+.notfound-desc {
+  font-size: 14px;
+  color: var(--color-text-body);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.notfound-actions {
+  margin-top: 10px;
+}

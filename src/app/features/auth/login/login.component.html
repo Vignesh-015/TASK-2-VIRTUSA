@@ -1,0 +1,370 @@
+<div class="auth-card-wrapper">
+  <div class="card auth-card">
+
+    <!-- Brand Header -->
+    <div class="auth-header">
+      <div class="auth-brand-icon">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="6" fill="#2563EB"/>
+          <circle cx="9" cy="8" r="3" fill="#FFFFFF"/>
+          <path d="M4 18C4 15.2386 6.23858 13 9 13C11.7614 13 14 15.2386 14 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="11" r="2.2" fill="#93C5FD"/>
+          <path d="M14.5 18C14.5 16.3431 15.8431 15 17.5 15C18.6 15 19.5 15.6 19.9 16.5" stroke="#93C5FD" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="auth-title">Employee<span class="text-blue">Hub</span></h1>
+      <p class="auth-subtitle">Secure enterprise workforce & personnel management portal</p>
+    </div>
+
+    <!-- Tab Switcher: Sign In vs Sign Up -->
+    <div class="auth-tab-bar" role="tablist" *ngIf="activeTab !== 'forgot'">
+      <button type="button"
+              class="auth-tab-btn"
+              [class.active]="activeTab === 'signin'"
+              (click)="setTab('signin')"
+              role="tab"
+              aria-selected="true">
+        Sign In
+      </button>
+      <button type="button"
+              class="auth-tab-btn"
+              [class.active]="activeTab === 'signup'"
+              (click)="setTab('signup')"
+              role="tab">
+        Create Account (Sign Up)
+      </button>
+    </div>
+
+    <!-- Alert Banners -->
+    <div *ngIf="successMessage" class="alert-box alert-box--success" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <div *ngIf="sessionExpiredMessage" class="alert-box alert-box--warning" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <span>{{ sessionExpiredMessage }}</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert-box alert-box--error" role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- ── SIGN IN FORM ──────────────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'signin'">
+      <form [formGroup]="loginForm" (ngSubmit)="onSignInSubmit()" class="auth-form" novalidate>
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="signin-email" class="form-label">
+            Work Email <span class="required">*</span>
+          </label>
+          <input id="signin-email"
+                 type="email"
+                 class="form-control"
+                 formControlName="email"
+                 placeholder="name@employeehub.com"
+                 autocomplete="email"
+                 [class.is-invalid]="loginEmail?.invalid && loginEmail?.touched" />
+          <div *ngIf="loginEmail?.invalid && loginEmail?.touched" class="form-error">
+            <span *ngIf="loginEmail?.errors?.['required']">Work email is required.</span>
+            <span *ngIf="loginEmail?.errors?.['email']">Please enter a valid email address.</span>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="signin-password" class="form-label">
+            Password <span class="required">*</span>
+          </label>
+          <div class="password-input-group">
+            <input id="signin-password"
+                   [type]="showPassword ? 'text' : 'password'"
+                   class="form-control"
+                   formControlName="password"
+                   placeholder="Enter your account password"
+                   autocomplete="current-password"
+                   [class.is-invalid]="loginPassword?.invalid && loginPassword?.touched" />
+            <button type="button"
+                    class="btn-toggle-password"
+                    (click)="togglePasswordVisibility()"
+                    [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+              <svg *ngIf="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg *ngIf="showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+          <div *ngIf="loginPassword?.invalid && loginPassword?.touched" class="form-error">
+            Password is required.
+          </div>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="form-row-remember">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="rememberMe" class="form-checkbox" />
+            <span>Remember my email on this device</span>
+          </label>
+          <button type="button" class="btn-forgot-link" (click)="openForgotPassword()">Forgot password?</button>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary btn-submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Sign In to Portal</span>
+          <span *ngIf="isLoading" class="spinner-inline">
+            <span class="spinner"></span> Authenticating...
+          </span>
+        </button>
+      </form>
+
+      <!-- ── QUICK DEMO LOGIN BUTTONS (PLACED HERE ON LOGIN PAGE) ──── -->
+      <div class="demo-section">
+        <div class="demo-divider">
+          <span>Quick Demo Access (Internship Evaluation)</span>
+        </div>
+        <p class="demo-hint">Click any role below to authenticate instantly and view its tailored dashboard:</p>
+
+        <div class="demo-buttons-grid">
+          <!-- Admin Demo Card -->
+          <button type="button" class="demo-card" (click)="quickDemoLogin('ADMIN')">
+            <div class="demo-card-top">
+              <span class="badge badge-primary">ADMIN</span>
+              <span class="demo-card-action">Instant Sign In &rarr;</span>
+            </div>
+            <div class="demo-card-name">Alexander Hayes</div>
+            <div class="demo-card-info">Full Administrator &bull; Employees, Departments, & Metrics</div>
+          </button>
+
+          <!-- HR Demo Card -->
+          <button type="button" class="demo-card" (click)="quickDemoLogin('HR')">
+            <div class="demo-card-top">
+              <span class="badge badge-info">HR SPECIALIST</span>
+              <span class="demo-card-action">Instant Sign In &rarr;</span>
+            </div>
+            <div class="demo-card-name">Sarah Jenkins</div>
+            <div class="demo-card-info">People Operations &bull; Staff directory & department view</div>
+          </button>
+
+          <!-- Employee Demo Card -->
+          <button type="button" class="demo-card" (click)="quickDemoLogin('EMPLOYEE')">
+            <div class="demo-card-top">
+              <span class="badge badge-neutral">EMPLOYEE</span>
+              <span class="demo-card-action">Instant Sign In &rarr;</span>
+            </div>
+            <div class="demo-card-name">Liam O'Connor</div>
+            <div class="demo-card-info">Staff Self-Service &bull; Personal profile & workspace</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIGN UP / REGISTRATION FORM ───────────────────────────────── -->
+    <div *ngIf="activeTab === 'signup'">
+      <form [formGroup]="registerForm" (ngSubmit)="onSignUpSubmit()" class="auth-form" novalidate>
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="reg-name" class="form-label">
+            Full Name <span class="required">*</span>
+          </label>
+          <input id="reg-name"
+                 type="text"
+                 class="form-control"
+                 formControlName="name"
+                 placeholder="e.g. John Doe"
+                 [class.is-invalid]="regName?.invalid && regName?.touched" />
+          <div *ngIf="regName?.invalid && regName?.touched" class="form-error">
+            Full name is required (minimum 2 characters).
+          </div>
+        </div>
+
+        <!-- Work Email -->
+        <div class="form-group">
+          <label for="reg-email" class="form-label">
+            Work Email Address <span class="required">*</span>
+          </label>
+          <input id="reg-email"
+                 type="email"
+                 class="form-control"
+                 formControlName="email"
+                 placeholder="name@employeehub.com"
+                 autocomplete="email"
+                 [class.is-invalid]="regEmail?.invalid && regEmail?.touched" />
+          <div *ngIf="regEmail?.invalid && regEmail?.touched" class="form-error">
+            Valid work email address is required.
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="reg-password" class="form-label">
+            Password <span class="required">*</span>
+          </label>
+          <div class="password-input-group">
+            <input id="reg-password"
+                   [type]="showRegPassword ? 'text' : 'password'"
+                   class="form-control"
+                   formControlName="password"
+                   placeholder="At least 6 characters"
+                   autocomplete="new-password"
+                   [class.is-invalid]="regPassword?.invalid && regPassword?.touched" />
+            <button type="button"
+                    class="btn-toggle-password"
+                    (click)="toggleRegPasswordVisibility()"
+                    [attr.aria-label]="showRegPassword ? 'Hide password' : 'Show password'">
+              <svg *ngIf="!showRegPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg *ngIf="showRegPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+          <div *ngIf="regPassword?.invalid && regPassword?.touched" class="form-error">
+            Password must be at least 6 characters.
+          </div>
+        </div>
+
+        <!-- Role Selection (Required by prompt: Role selection Admin, HR, Employee) -->
+        <div class="form-group">
+          <label class="form-label">
+            Account Role <span class="required">*</span>
+          </label>
+          <div class="role-selector-grid">
+            <button type="button"
+                    class="role-choice-card"
+                    [class.selected]="regRole?.value === 'EMPLOYEE'"
+                    (click)="selectRole('EMPLOYEE')">
+              <span class="role-choice-title">Employee</span>
+              <span class="role-choice-desc">Self-Service Profile</span>
+            </button>
+
+            <button type="button"
+                    class="role-choice-card"
+                    [class.selected]="regRole?.value === 'HR'"
+                    (click)="selectRole('HR')">
+              <span class="role-choice-title">HR Specialist</span>
+              <span class="role-choice-desc">Workforce Ops</span>
+            </button>
+
+            <button type="button"
+                    class="role-choice-card"
+                    [class.selected]="regRole?.value === 'ADMIN'"
+                    (click)="selectRole('ADMIN')">
+              <span class="role-choice-title">Admin</span>
+              <span class="role-choice-desc">Full Clearance</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Department Selection -->
+        <div class="form-group">
+          <label for="reg-dept" class="form-label">
+            Department <span class="required">*</span>
+          </label>
+          <select id="reg-dept" class="form-select" formControlName="department">
+            <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+          </select>
+        </div>
+
+        <!-- Submit Registration -->
+        <button type="submit" class="btn btn-primary btn-submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Create Employee Account</span>
+          <span *ngIf="isLoading" class="spinner-inline">
+            <span class="spinner"></span> Creating Account...
+          </span>
+        </button>
+
+        <p class="switch-tab-hint">
+          Already registered?
+          <button type="button" class="btn-link-inline" (click)="setTab('signin')">Sign in here</button>
+        </p>
+      </form>
+    </div>
+
+    <!-- ── FORGOT PASSWORD ───────────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'forgot'">
+      <div class="forgot-header">
+        <h2 class="forgot-title">Forgot your password?</h2>
+        <p class="forgot-text" *ngIf="!isMockReset">
+          Enter your work email and we will send you a link to reset your password.
+        </p>
+        <p class="forgot-text" *ngIf="isMockReset">
+          Enter your work email and choose a new password. (Demo mode: no email is sent.)
+        </p>
+      </div>
+
+      <form [formGroup]="forgotForm" (ngSubmit)="onForgotSubmit()" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="forgot-email" class="form-label">Work Email <span class="required">*</span></label>
+          <input id="forgot-email" type="email" class="form-control" formControlName="email"
+                 placeholder="name@employeehub.com" autocomplete="email"
+                 [class.is-invalid]="forgotEmail?.invalid && forgotEmail?.touched" />
+          <div *ngIf="forgotEmail?.invalid && forgotEmail?.touched" class="form-error">
+            <span *ngIf="forgotEmail?.errors?.['required']">Work email is required.</span>
+            <span *ngIf="forgotEmail?.errors?.['email']">Please enter a valid email address.</span>
+          </div>
+        </div>
+
+        <ng-container *ngIf="isMockReset">
+          <div class="form-group">
+            <label for="forgot-new" class="form-label">New Password <span class="required">*</span></label>
+            <div class="password-input-group">
+              <input id="forgot-new" [type]="showResetPassword ? 'text' : 'password'" class="form-control"
+                     formControlName="newPassword" autocomplete="new-password"
+                     [class.is-invalid]="forgotNewPassword?.invalid && forgotNewPassword?.touched" />
+              <button type="button" class="btn-toggle-password" (click)="showResetPassword = !showResetPassword"
+                      [attr.aria-label]="showResetPassword ? 'Hide password' : 'Show password'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <div class="form-hint">Min 8 characters with upper &amp; lower case, a number and a symbol.</div>
+            <div *ngIf="forgotNewPassword?.touched && forgotNewPassword?.invalid" class="form-error">
+              Password does not meet the strength requirements.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="forgot-confirm" class="form-label">Confirm New Password <span class="required">*</span></label>
+            <input id="forgot-confirm" type="password" class="form-control" formControlName="confirmPassword"
+                   autocomplete="new-password"
+                   [class.is-invalid]="forgotConfirmPassword?.touched && forgotConfirmPassword?.invalid" />
+            <div *ngIf="forgotConfirmPassword?.touched && forgotForm.hasError('mismatch')" class="form-error">
+              Passwords do not match.
+            </div>
+          </div>
+        </ng-container>
+
+        <button type="submit" class="btn btn-primary btn-submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">{{ isMockReset ? 'Reset Password' : 'Send Reset Link' }}</span>
+          <span *ngIf="isLoading" class="spinner-inline"><span class="spinner"></span> Please wait...</span>
+        </button>
+
+        <p class="switch-tab-hint">
+          Remembered it?
+          <button type="button" class="btn-link-inline" (click)="setTab('signin')">Back to Sign In</button>
+        </p>
+      </form>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,45 @@
+<div class="forbidden-container">
+  <div class="card forbidden-card">
+    <div class="forbidden-graphic">
+      <div class="icon-ring">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <span class="error-code-badge">HTTP 403 &bull; ACCESS FORBIDDEN</span>
+    </div>
+
+    <h1 class="forbidden-title">Administrative Clearance Required</h1>
+    <p class="forbidden-explanation">
+      You are currently authenticated as
+      <strong>{{ (authService.currentUser$ | async)?.name }}</strong>
+      with the role
+      <span class="role-pill">{{ (authService.currentUser$ | async)?.role }}</span>.
+      This module is protected by EmployeeHub RBAC security guards and requires <strong>ADMIN</strong> or <strong>HR SPECIALIST</strong> permissions.
+    </p>
+
+    <div class="forbidden-actions">
+      <button type="button" class="btn btn-primary" (click)="goToSafeZone()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Return to {{ (authService.currentUser$ | async)?.role === 'EMPLOYEE' ? 'My Profile' : 'Dashboard' }}
+      </button>
+
+      <button type="button" class="btn btn-secondary" (click)="switchToAdmin()">
+        Switch to Admin Role (Demo)
+      </button>
+    </div>
+
+    <div class="security-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>Enforced by Angular `roleGuard` & `roleMatchGuard`. Real-world enforcement will be backed by Spring Security `&#64;PreAuthorize`.</span>
+    </div>
+  </div>
+</div>

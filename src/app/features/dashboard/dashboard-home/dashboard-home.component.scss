@@ -1,0 +1,370 @@
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── WELCOME HEADER ─────────────────────────────────────────────────────── */
+.welcome-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFFFFF;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 650px;
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-primary-blue);
+      background-color: var(--color-primary-blue-light);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      width: fit-content;
+    }
+
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--color-primary-navy);
+      letter-spacing: -0.02em;
+    }
+
+    .welcome-subtitle {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      line-height: 1.45;
+      margin: 0;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ─── STATS GRID ─────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* ─── ANALYTICS ROW ──────────────────────────────────────────────────────── */
+.analytics-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-title-group {
+  display: flex;
+  flex-direction: column;
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-heading);
+    margin: 0;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin: 2px 0 0;
+  }
+}
+
+/* Segmented Bar Chart */
+.segmented-bar-container {
+  margin-bottom: 20px;
+
+  .segmented-bar {
+    height: 12px;
+    display: flex;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background-color: var(--color-surface-muted);
+  }
+
+  .bar-segment {
+    height: 100%;
+    transition: width 0.3s ease;
+
+    &:first-child {
+      border-top-left-radius: var(--radius-full);
+      border-bottom-left-radius: var(--radius-full);
+    }
+
+    &:last-child {
+      border-top-right-radius: var(--radius-full);
+      border-bottom-right-radius: var(--radius-full);
+    }
+  }
+}
+
+/* Department Breakdown List */
+.department-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.department-stat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-surface-muted);
+  }
+
+  .dept-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .dept-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dept-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-main);
+    }
+  }
+
+  .dept-metrics {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .dept-progress-track {
+      width: 100px;
+      height: 6px;
+      background-color: var(--color-surface-muted);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+
+      @media (max-width: 500px) {
+        display: none;
+      }
+    }
+
+    .dept-progress-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+    }
+
+    .dept-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-heading);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    .dept-pct {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      min-width: 35px;
+      text-align: right;
+    }
+  }
+}
+
+/* Status Breakdown Pills */
+.status-summary-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.status-pill-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .status-pill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .status-pill-count {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-heading);
+    }
+  }
+
+  .status-pill-meter {
+    height: 6px;
+    background-color: var(--color-surface-muted);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .status-pill-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+  }
+
+  .status-pill-ratio {
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+}
+
+/* ─── RECENT EMPLOYEES TABLE ─────────────────────────────────────────────── */
+.employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .employee-cell-meta {
+    display: flex;
+    flex-direction: column;
+
+    .employee-name {
+      font-weight: 600;
+      color: var(--color-text-heading);
+    }
+
+    .employee-email {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+  }
+}
+
+.employee-id-pill {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary-blue);
+  background-color: var(--color-primary-blue-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.department-tag {
+  font-size: 13px;
+  color: var(--color-text-body);
+}
+
+.designation-text, .date-text {
+  font-size: 13px;
+  color: var(--color-text-body);
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* ─── EMPLOYEE WORKSPACE SPECIFIC STYLES ─────────────────────────────────── */
+.emp-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+
+  .emp-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    .meta-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meta-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-heading);
+
+      &.font-mono {
+        font-family: monospace;
+        color: var(--color-primary-blue);
+      }
+
+      &.text-blue {
+        color: var(--color-primary-blue);
+      }
+    }
+  }
+}
+
+.teammates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .teammate-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast);
+
+    &:hover {
+      background-color: var(--color-surface-muted);
+    }
+
+    .teammate-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+
+      .teammate-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-text-heading);
+      }
+
+      .teammate-role {
+        font-size: 11px;
+        color: var(--color-text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
