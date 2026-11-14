@@ -150,7 +150,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     this.userService.getUsers().subscribe({
       next: (users) => {
         this.existingEmails = users.map(u => ({
-          id: u.id,
+          id: String(u.id),
           email: u.email.trim().toLowerCase()
         }));
         this.userForm.get('email')?.updateValueAndValidity({ emitEvent: false });
@@ -205,20 +205,19 @@ export class UserFormComponent implements OnInit, OnDestroy {
         return null;
       }
       const duplicate = this.existingEmails.some(
-        entry => entry.email === value && entry.id !== this.editingUserId
+        entry => entry.email === value && String(entry.id) !== String(this.editingUserId)
       );
       return duplicate ? { duplicateEmail: true } : null;
     };
   }
 
-  private handleSaveError(err: Error): void {
+  private handleSaveError(err: any): void {
     this.isSubmitting = false;
-    const message = err?.message || 'Unable to save user. Please try again.';
+    const message = err?.error?.message || err?.message || 'Unable to save user. Please try again.';
     if (message.toLowerCase().includes('email')) {
       this.userForm.get('email')?.setErrors({ duplicateEmail: true });
-    } else {
-      this.formError = message;
     }
+    this.formError = message;
   }
 }
 

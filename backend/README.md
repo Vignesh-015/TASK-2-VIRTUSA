@@ -55,6 +55,24 @@ H2 Console (when running with `h2` profile): `http://localhost:8080/api/h2-conso
 - Windows: `mvnw.cmd -q -DskipTests package`
 - Linux / macOS: `./mvnw -q -DskipTests package`
 
+## User Module (`com.sec.team2.ems.user`)
+
+The User Management module provides full CRUD operations for employee accounts. On startup, if the database is empty, `UserDataSeeder` automatically populates 12 initial employee records across Engineering, HR, Finance, Sales, Operations, and Support.
+
+Detailed architecture and design documentation is available at [docs/USER_MODULE.md](docs/USER_MODULE.md).
+
+### REST Endpoints
+
+Base path: `http://localhost:8080/api/users`
+
+| Method | Endpoint | Description | Request Body | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/users` | List all employee accounts ordered by ID | None | `200 OK` |
+| `GET` | `/users/{id}` | Get employee details by ID | None | `200 OK` (`404` if not found) |
+| `POST` | `/users` | Create a new employee | `UserRequest` | `201 Created` (`400` validation, `409` duplicate) |
+| `PUT` | `/users/{id}` | Update existing employee details | `UserRequest` | `200 OK` (`404` if not found, `409` duplicate) |
+| `DELETE` | `/users/{id}` | Delete employee account (protects last admin) | None | `204 No Content` (`409` if last admin) |
+
 ## Package Structure & Module Owners
 
 Base package: `com.sec.team2.ems`

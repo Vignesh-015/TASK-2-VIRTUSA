@@ -15,7 +15,13 @@
 
 ## 1. Folder Structure
 
-- **Backend (`backend/`, `src/main/java`, `src/main/resources`):** **NOT FOUND** (no backend folder or Java/Spring Boot files exist in this repo).
+- **Backend (`backend/src/main/java/com/sec/team2/ems/`):**
+  - `config/`: `CorsConfig.java`, `SecurityConfig.java`
+  - `common/`: `Role.java`, `ApiError.java`, `ResourceNotFoundException.java`, `DuplicateResourceException.java`, `BusinessRuleException.java`, `GlobalExceptionHandler.java`
+  - `health/`: `HealthController.java` (`GET /api/health`)
+  - `user/`: `User.java`, `UserStatus.java`, `UserRepository.java`, `UserRequest.java`, `UserResponse.java`, `UserMapper.java`, `UserService.java`, `UserController.java`, `UserDataSeeder.java`
+  - `auth/`, `dashboard/`, `report/`, `profile/`: Package spaces reserved for teammates
+  - `resources/`: `application.properties`, `application-h2.properties`, `application-local.properties.example`
 - **Frontend (`team2-dashboard/src/app/`, 3 levels deep):**
 
 ```text
@@ -54,7 +60,7 @@ src/app/
 - **Node:** `v22.21.0` observed in local environment (`node -v`); not pinned in `package.json` (`README.md` notes `v18+` or `v20+`).
 - **Runtime Libraries (`package.json`):** `rxjs` `~7.8.0`, `tslib` `^2.3.0`, `zone.js` `~0.14.3`. No external UI/CSS framework.
 - **Test/Dev Libraries (`package.json`):** `jasmine-core` `~5.1.0`, `karma` `~6.4.0`, `karma-chrome-launcher` `~3.2.0`, `karma-coverage` `~2.2.0`, `karma-jasmine` `~5.1.0`, `karma-jasmine-html-reporter` `~2.1.0`, `@types/jasmine` `~5.1.0`.
-- **Spring Boot / Java / Database (`pom.xml` / `build.gradle`):** **NOT FOUND**.
+- **Spring Boot / Java / Database:** Java 17 LTS, Spring Boot 3.5.16 (`backend/pom.xml`), Spring Data JPA, Hibernate, Validation, Spring Security, MySQL Connector/J (default), H2 in-memory (optional `h2` profile), Lombok.
 
 ---
 
@@ -140,7 +146,7 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 | :--- | :--- | :--- | :--- | :--- |
 | Auth | DONE (mock + HTTP client ready) | MISSING | `features/auth/login/*`, `core/services/auth.service.ts`, `core/interceptors/auth.interceptor.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Dashboard | DONE (mock via `EmployeeService`) | MISSING | `features/dashboard/dashboard-home/*`, `core/services/dashboard.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
-| Users | DONE (mock + HTTP client ready) | MISSING | `features/users/*`, `features/users/users.permissions.ts`, `shared/components/confirm-dialog/*` | Vignesh-015 (`ef76182`) |
+| Users | DONE (useMock=false, real REST API) | IMPLEMENTED | `team2-dashboard/src/app/features/users/*`, `backend/src/main/java/com/sec/team2/ems/user/*` | Vignesh-015 (`ef76182`, `554d4c7`) |
 | Reports | PLACEHOLDER (unrouted) | MISSING | `features/reports/reports/*`, `features/reports/reports.module.ts` | Vignesh-015 (`1bc2347`) |
 | Profile | PARTIAL (no change-password, mock `AuthService.updateProfile`) | MISSING | `features/profile/profile/*` | YUVASHREE R H (`6d88b6f`); Vignesh-015 (`1bc2347`) |
 | HR page (Employees & Departments) | DONE (mock `localStorage` only) | MISSING | `features/employees/*`, `features/departments/*`, `core/services/{employee,department}.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
@@ -153,7 +159,7 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 
 ## 8. API Contract
 
-Base URL from `environment.ts`: `http://localhost:8080/api`. All backend implementations are **MISSING**.
+Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` endpoints are **IMPLEMENTED** in Spring Boot; remaining endpoints are pending assignment to teammates.
 
 | Method | Full Path | Request Body | Response Body | Source File |
 | :--- | :--- | :--- | :--- | :--- |
@@ -182,7 +188,7 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. All backend impleme
 
 ## 10. Known Issues and Mismatches
 
-- **Missing Backend:** No `backend/` directory, `pom.xml`, or Spring Boot code exists in the repo.
+- **Backend Status:** The `backend/` directory is created with Spring Boot 3.5.16 skeleton and full `User` module implementation. Other member modules (`auth`, `dashboard`, `report`, `profile`) remain to be implemented.
 - **Conflicting `User` Models & Departments:** `core/models/user.model.ts` (`name`, `joinDate`, 4 statuses) vs `features/users/models/user.model.ts` (`fullName`, `joinedOn`, 2 statuses); `DepartmentService` (6 corporate names) vs `USER_DEPARTMENTS` (6 short names).
 - **Dashboard Unused Code:** `DashboardHomeComponent` uses `EmployeeService.getDashboardStats()` instead of `DashboardService` (whose `DashboardStats` fields differ); `SummaryStripComponent`, `DepartmentListComponent`, and `ActivityTimelineComponent` inside `features/dashboard/components/` are declared in `DashboardModule` but not rendered in `dashboard-home.component.html`.
 - **Style Inconsistencies:** `styles.scss` uses `--color-primary-blue: #2563EB` and imports Google Fonts `DM Sans`/`Inter`, whereas `styles/_variables.scss` defines older tokens (`$color-bg: #F6F4EF`, `$color-accent: #2457A6`). `reports.component.scss` references undefined variables `--text-sm` and `--color-text`. `styles.scss` uses `--radius-full` (`9999px`) on `.badge` and `app-layout` profile button.
@@ -206,4 +212,6 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. All backend impleme
 ## 12. Change Log
 
 - `2026-11-12` | Initial context file generated
+- `2026-11-13` | Initialized backend skeleton with Spring Boot 3, MySQL config, H2 profile, CORS, and GlobalExceptionHandler
+- `2026-11-14` | Implemented User module in backend (Entity, Repository, DTOs, Service, Controller, Seeder) and connected Angular frontend (useMock=false)
 

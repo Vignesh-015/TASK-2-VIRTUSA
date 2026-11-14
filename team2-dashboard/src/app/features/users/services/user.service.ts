@@ -32,7 +32,7 @@ import { User, UserNotice } from '../models/user.model';
 })
 export class UserService {
   // Set to false when connecting to the Spring Boot backend API
-  private readonly useMock = true;
+  private readonly useMock = false;
 
   private readonly apiUrl = environment.apiUrl.endsWith('/api')
     ? `${environment.apiUrl}/users`
