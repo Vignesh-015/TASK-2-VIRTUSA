@@ -80,7 +80,7 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 | `/profile` | `ProfileModule` -> `ProfileComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | All authenticated | Self-service profile |
 | `/forbidden` | `ForbiddenComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | All authenticated | 403 page |
 | `/not-found`, `**` | `NotFoundComponent` | None | None | Any | 404 page |
-| `/reports` | `ReportsModule` -> `ReportsComponent` | — | — | — | **PLACEHOLDER:** module exists on disk, NOT registered in `AppRoutingModule`; `RegisterComponent` also unrouted |
+| `/reports` | `ReportsModule` -> `ReportsComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR` | Complete with department, status, & monthly join charts + date filter |
 
 ---
 
