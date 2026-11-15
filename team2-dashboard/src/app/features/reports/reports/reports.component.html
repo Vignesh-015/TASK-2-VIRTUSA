@@ -1,22 +1,470 @@
-<div class="page-header">
-  <h1>Reports</h1>
-  <p>Generated reports and data exports will be listed here.</p>
-</div>
+<div class="reports-container">
 
-<!-- Table placeholder — will be populated from the API -->
-<div class="reports-table-wrapper">
-  <table class="reports-table">
-    <thead>
-      <tr>
-        <th>Report name</th>
-        <th>Created</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td colspan="3" class="empty-state">No reports available yet.</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- ── 1. PAGE HEADER ────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header__main">
+      <div class="page-title-group">
+        <h1 class="page-title">Workforce Analytics &amp; Reports</h1>
+        <p class="page-subtitle">
+          Interactive department distributions, account status health, and monthly employee joining trends.
+        </p>
+      </div>
+
+      <div class="page-header__actions">
+        <!-- Dataset Selector Switcher -->
+        <div class="dataset-switcher" role="group" aria-label="Dataset Selector">
+          <button type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="selectedSource === 'users'"
+                  [class.btn-secondary]="selectedSource !== 'users'"
+                  (click)="setDataSource('users')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            Users Dataset
+          </button>
+          <button type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="selectedSource === 'employees'"
+                  [class.btn-secondary]="selectedSource !== 'employees'"
+                  (click)="setDataSource('employees')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Employees Dataset
+          </button>
+        </div>
+
+        <!-- Export CSV Button -->
+        <button type="button"
+                class="btn btn-outline btn-sm"
+                (click)="exportToCsv()"
+                [disabled]="filteredRecords.length === 0"
+                title="Download filtered report as CSV">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state card">
+    <div class="loading-spinner"></div>
+    <p>Loading analytics and workforce records...</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="errorMessage && !isLoading" class="alert-box alert-box--error" role="alert">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="!isLoading">
+
+    <!-- ── 2. DATE FILTER SECTION ──────────────────────────────────────── -->
+    <section class="card filter-card" aria-label="Date Range Filter">
+      <div class="filter-card__header">
+        <div class="filter-title-group">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="filter-title">Date Range Filter</span>
+        </div>
+
+        <!-- Presets -->
+        <div class="preset-chips">
+          <span class="preset-label">Quick ranges:</span>
+          <button type="button" class="preset-chip" (click)="setQuickRange('all')" [class.active]="!appliedStartDate && !appliedEndDate">
+            All Time
+          </button>
+          <button type="button" class="preset-chip" (click)="setQuickRange('2024')">
+            2024
+          </button>
+          <button type="button" class="preset-chip" (click)="setQuickRange('2023')">
+            2023
+          </button>
+          <button type="button" class="preset-chip" (click)="setQuickRange('last12')">
+            Last 12 Mos
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-card__body">
+        <form class="date-filter-form" (ngSubmit)="applyDateFilter()">
+          <!-- Start Date -->
+          <div class="filter-control-group">
+            <label for="filter-start-date" class="form-label">Start Date (Joined On)</label>
+            <input id="filter-start-date"
+                   type="date"
+                   class="form-control"
+                   [(ngModel)]="startDate"
+                   name="startDate"
+                   placeholder="YYYY-MM-DD" />
+          </div>
+
+          <!-- End Date -->
+          <div class="filter-control-group">
+            <label for="filter-end-date" class="form-label">End Date (Joined On)</label>
+            <input id="filter-end-date"
+                   type="date"
+                   class="form-control"
+                   [(ngModel)]="endDate"
+                   name="endDate"
+                   placeholder="YYYY-MM-DD" />
+          </div>
+
+          <!-- Filter Action Buttons -->
+          <div class="filter-actions-group">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Apply Filter
+            </button>
+
+            <button type="button" class="btn btn-secondary btn-sm" (click)="resetDateFilter()" [disabled]="!appliedStartDate && !appliedEndDate && !startDate && !endDate">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+                <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8m19 8-0.7.8A10 10 0 0 1 2 12.5"></path>
+              </svg>
+              Reset Filter
+            </button>
+          </div>
+        </form>
+
+        <!-- Validation Error Message -->
+        <div *ngIf="dateError" class="form-error filter-error" role="alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          {{ dateError }}
+        </div>
+
+        <!-- Currently Applied Range Indicator -->
+        <div class="applied-range-banner">
+          <span class="range-status-dot"></span>
+          <span *ngIf="!appliedStartDate && !appliedEndDate">
+            Showing <strong>All-Time</strong> data: <strong>{{ totalRecords }}</strong> total {{ selectedSource }}.
+          </span>
+          <span *ngIf="appliedStartDate || appliedEndDate">
+            Active Filter:
+            <strong>{{ appliedStartDate || 'Beginning' }}</strong> to <strong>{{ appliedEndDate || 'Present' }}</strong>
+            &bull; Matches <strong>{{ totalRecords }}</strong> {{ selectedSource }}.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. KPI METRICS STRIP ────────────────────────────────────────── -->
+    <section class="kpi-grid" aria-label="Key Performance Indicators">
+      <div class="card kpi-card">
+        <div class="kpi-icon icon-blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total {{ selectedSource === 'users' ? 'Users' : 'Employees' }}</span>
+          <span class="kpi-value">{{ totalRecords }}</span>
+          <span class="kpi-sub">Within selected date range</span>
+        </div>
+      </div>
+
+      <div class="card kpi-card">
+        <div class="kpi-icon icon-green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Active Accounts</span>
+          <span class="kpi-value">{{ activeCount }}</span>
+          <span class="kpi-sub">{{ activePercentage }}% active rate</span>
+        </div>
+      </div>
+
+      <div class="card kpi-card">
+        <div class="kpi-icon icon-red">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+          </svg>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Inactive Accounts</span>
+          <span class="kpi-value">{{ inactiveCount }}</span>
+          <span class="kpi-sub">{{ totalRecords > 0 ? (totalRecords - activeCount) : 0 }} non-active records</span>
+        </div>
+      </div>
+
+      <div class="card kpi-card">
+        <div class="kpi-icon icon-purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"></path>
+            <path d="M3 7v14"></path>
+            <path d="M13 7v14"></path>
+            <path d="M21 7v14"></path>
+            <path d="M2 7h20L12 2z"></path>
+          </svg>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Departments</span>
+          <span class="kpi-value">{{ totalDepartments }}</span>
+          <span class="kpi-sub">Represented in results</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4. CHARTS SECTION ───────────────────────────────────────────── -->
+    <div class="charts-grid">
+
+      <!-- ── CHART A: USERS BY DEPARTMENT ──────────────────────────────── -->
+      <section class="card chart-card chart-card--departments" aria-label="Users by Department Chart">
+        <div class="card-header chart-card__header">
+          <div>
+            <h2 class="chart-title">Users by Department</h2>
+            <p class="chart-subtitle">Headcount and relative distribution across functional departments</p>
+          </div>
+          <span class="badge badge-primary">{{ totalDepartments }} Departments</span>
+        </div>
+
+        <div class="card-body chart-card__body">
+          <!-- Empty State -->
+          <div *ngIf="departmentData.length === 0" class="chart-empty-state">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <p>No department records found for the selected date filter.</p>
+            <button type="button" class="btn btn-outline btn-sm" (click)="resetDateFilter()">Reset Filter</button>
+          </div>
+
+          <!-- Horizontal Bar Chart -->
+          <div *ngIf="departmentData.length > 0" class="department-bars-container">
+            <div *ngFor="let item of departmentData" class="dept-bar-row">
+              <div class="dept-bar-label" [title]="item.name">
+                {{ item.name }}
+              </div>
+
+              <div class="dept-bar-track">
+                <div class="dept-bar-fill"
+                     [style.width.%]="(item.count / maxDepartmentCount) * 100"
+                     [style.backgroundColor]="item.color"
+                     [title]="item.name + ': ' + item.count + ' (' + (item.percentage | number:'1.1-1') + '%)'">
+                </div>
+              </div>
+
+              <div class="dept-bar-value">
+                <span class="count-badge">{{ item.count }}</span>
+                <span class="pct-label">{{ item.percentage | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CHART B: ACTIVE VS INACTIVE USERS ─────────────────────────── -->
+      <section class="card chart-card chart-card--status" aria-label="Active vs Inactive Users Chart">
+        <div class="card-header chart-card__header">
+          <div>
+            <h2 class="chart-title">Active vs Inactive Users</h2>
+            <p class="chart-subtitle">Account status breakdown from registered records</p>
+          </div>
+          <span class="badge" [ngClass]="activePercentage >= 70 ? 'badge-success' : 'badge-warning'">
+            {{ activePercentage }}% Active
+          </span>
+        </div>
+
+        <div class="card-body chart-card__body">
+          <!-- Empty State -->
+          <div *ngIf="totalRecords === 0" class="chart-empty-state">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No account status records match your current filter.</p>
+          </div>
+
+          <!-- SVG Donut Chart + Legend -->
+          <div *ngIf="totalRecords > 0" class="donut-chart-layout">
+            <div class="donut-svg-wrapper">
+              <svg viewBox="0 0 100 100" class="donut-svg" aria-label="Donut Chart">
+                <!-- Background Circle -->
+                <circle cx="50" cy="50" r="38"
+                        fill="transparent"
+                        stroke="var(--color-border-subtle)"
+                        stroke-width="14" />
+
+                <!-- Status Segments -->
+                <circle *ngFor="let seg of statusData"
+                        cx="50" cy="50" r="38"
+                        fill="transparent"
+                        [attr.stroke]="seg.color"
+                        stroke-width="14"
+                        [attr.stroke-dasharray]="seg.dashArray"
+                        [attr.stroke-dashoffset]="seg.dashOffset"
+                        class="donut-segment" />
+
+                <!-- Center Hole Text -->
+                <text x="50" y="47" text-anchor="middle" class="donut-center-value">
+                  {{ totalRecords }}
+                </text>
+                <text x="50" y="60" text-anchor="middle" class="donut-center-label">
+                  TOTAL
+                </text>
+              </svg>
+            </div>
+
+            <!-- Legend List -->
+            <div class="status-legend-list">
+              <div *ngFor="let seg of statusData" class="legend-row">
+                <span class="legend-dot" [style.backgroundColor]="seg.color"></span>
+                <span class="legend-label">{{ seg.label }}</span>
+                <span class="legend-count">{{ seg.count }}</span>
+                <span class="legend-pct">({{ seg.percentage }}%)</span>
+              </div>
+
+              <div class="status-integrity-note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Statuses derived strictly from models; unverified statuses are never assumed inactive.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── CHART C: MONTHLY JOINS ──────────────────────────────────────── -->
+    <section class="card chart-card chart-card--monthly" aria-label="Monthly Joins Chart">
+      <div class="card-header chart-card__header">
+        <div>
+          <h2 class="chart-title">Monthly Joins</h2>
+          <p class="chart-subtitle">Chronological hiring and registration volume over time</p>
+        </div>
+        <span class="badge badge-neutral">{{ monthlyJoinsData.length }} Active Months</span>
+      </div>
+
+      <div class="card-body chart-card__body">
+        <!-- Empty State -->
+        <div *ngIf="monthlyJoinsData.length === 0" class="chart-empty-state">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <p>No recorded join dates fall into the selected date period.</p>
+          <button type="button" class="btn btn-outline btn-sm" (click)="resetDateFilter()">Clear Range Filter</button>
+        </div>
+
+        <!-- Vertical Columns Chart -->
+        <div *ngIf="monthlyJoinsData.length > 0" class="monthly-chart-container">
+          <div class="monthly-bars-track">
+            <div *ngFor="let item of monthlyJoinsData" class="monthly-column">
+              <!-- Count Tag -->
+              <span class="monthly-val-tag">{{ item.count }}</span>
+
+              <!-- Column Bar -->
+              <div class="monthly-bar-wrapper">
+                <div class="monthly-bar-fill"
+                     [style.height.%]="item.barHeightPercent"
+                     [title]="item.fullLabel + ': ' + item.count + ' joined'">
+                </div>
+              </div>
+
+              <!-- Month Label -->
+              <span class="monthly-label" [title]="item.fullLabel">{{ item.label }}</span>
+            </div>
+          </div>
+
+          <div class="chart-x-axis-caption">
+            <span>Historical join periods recorded in {{ selectedSource === 'users' ? 'User accounts (joinedOn)' : 'Employee dossiers (joiningDate)' }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 5. DETAILED JOIN RECORDS TABLE ──────────────────────────────── -->
+    <section class="card table-section-card" aria-label="Detailed Records">
+      <div class="card-header table-section__header">
+        <div>
+          <h2 class="chart-title">Detailed Records ({{ filteredRecords.length }})</h2>
+          <p class="chart-subtitle">Individual records currently included in the analytics calculation</p>
+        </div>
+
+        <div class="table-header-meta">
+          <span class="badge badge-neutral">Page {{ currentPage }} of {{ totalPages }}</span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Role / Designation</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="pagedRecords.length === 0">
+              <td colspan="6" class="empty-table-row">No records match the applied filter.</td>
+            </tr>
+            <tr *ngFor="let r of pagedRecords">
+              <td class="font-medium text-main">{{ r.name }}</td>
+              <td>
+                <span class="dept-pill">{{ r.department }}</span>
+              </td>
+              <td class="text-muted">{{ r.roleOrDesignation }}</td>
+              <td>
+                <app-status-badge [status]="r.status" [type]="'status'" [showDot]="true"></app-status-badge>
+              </td>
+              <td>
+                <span class="date-cell">{{ r.joinDate || 'N/A' }}</span>
+              </td>
+              <td class="text-muted text-sm">{{ r.email }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer" *ngIf="filteredRecords.length > pageSize">
+        <app-pagination [total]="filteredRecords.length"
+                        [page]="currentPage"
+                        [pageSize]="pageSize"
+                        (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </section>
+
+  </div>
 </div>

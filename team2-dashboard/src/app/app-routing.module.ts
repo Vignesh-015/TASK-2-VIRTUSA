@@ -78,6 +78,13 @@ const routes: Routes = [
           import('./features/profile/profile.module').then(m => m.ProfileModule)
       },
       {
+        path: 'reports',
+        canMatch: [roleMatchGuard],
+        data: { roles: ['ADMIN', 'HR'] },
+        loadChildren: () =>
+          import('./features/reports/reports.module').then(m => m.ReportsModule)
+      },
+      {
         path: 'forbidden',
         component: ForbiddenComponent
       }
