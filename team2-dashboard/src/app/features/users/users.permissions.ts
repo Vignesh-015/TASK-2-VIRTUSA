@@ -11,3 +11,7 @@ export function canAddOrEditUsers(role: UserRole | null | undefined): boolean {
 export function canDeleteUsers(role: UserRole | null | undefined): boolean {
   return role === 'ADMIN';
 }
+
+export function canChangeRole(role: UserRole | null | undefined): boolean {
+  return role === 'ADMIN';
+}

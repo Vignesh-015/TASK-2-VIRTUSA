@@ -11,9 +11,9 @@ import lombok.Setter;
 import java.time.LocalDate;
 
 /**
- * Data Transfer Object (DTO) for returning user details in API responses.
- * Never exposes the hashed password or database entity references.
- * The joinedOn date is serialized as an ISO-8601 string (yyyy-MM-dd) to match Angular.
+ * Data Transfer Object (DTO) for returning full employee and user details in API responses.
+ * Provides a unified payload for both the Employees tab (HR view) and Users tab (access view).
+ * Never exposes the hashed password.
  */
 @Getter
 @Setter
@@ -23,14 +23,23 @@ import java.time.LocalDate;
 public class UserResponse {
 
     private Long id;
+    private String employeeCode;
+    private String firstName;
+    private String lastName;
     private String fullName;
     private String email;
     private String phone;
     private String department;
-    private Role role;
-    private UserStatus status;
+    private String designation;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate joinedOn;
-}
 
+    private UserStatus status;
+    private EmploymentType employmentType;
+    private String workLocation;
+    private String managerName;
+    private String skills;
+    private String bio;
+    private Role role;
+}

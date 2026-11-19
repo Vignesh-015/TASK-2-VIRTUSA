@@ -1,13 +1,22 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
-import { Employee, EmployeeFilter, EmployeeStatus } from '../models/employee.model';
+import { delay, map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { Employee, EmployeeFilter, EmployeeStatus, EmploymentType } from '../models/employee.model';
 import { DepartmentService } from './department.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EmployeeService {
+  // Set to false when connecting to the Spring Boot backend API
+  private readonly useMock = false;
+
+  private readonly apiUrl = environment.apiUrl.endsWith('/api')
+    ? `${environment.apiUrl}/users`
+    : `${environment.apiUrl}/api/users`;
+
   private readonly STORAGE_KEY = 'employeehub_employees_v2';
 
   private readonly initialEmployees: Employee[] = [
@@ -531,38 +540,82 @@ export class EmployeeService {
   private employeesSubject = new BehaviorSubject<Employee[]>(this.loadInitial());
   public employees$: Observable<Employee[]> = this.employeesSubject.asObservable();
 
-  constructor(private departmentService: DepartmentService) {
+  constructor(
+    private http: HttpClient,
+    private departmentService: DepartmentService
+  ) {
     this.syncDepartmentCounts();
-  }
-
-  private loadInitial(): Employee[] {
-    const raw = localStorage.getItem(this.STORAGE_KEY);
-    if (raw) {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        // fallback to seed
-      }
+    if (!this.useMock) {
+      this.refreshFromApi();
     }
-    this.persist(this.initialEmployees);
-    return this.initialEmployees;
   }
 
-  private persist(employees: Employee[]): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(employees));
-    this.syncDepartmentCounts();
+  public mapUserResponseToEmployee(user: any): Employee {
+    const fName = user.firstName || '';
+    const lName = user.lastName || '';
+    const computedName = user.fullName || `${fName} ${lName}`.trim() || 'Employee';
+    const skillsArray = typeof user.skills === 'string'
+      ? user.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : (Array.isArray(user.skills) ? user.skills : []);
+
+    return {
+      id: String(user.id),
+      employeeId: user.employeeCode || `EMP-${user.id}`,
+      firstName: fName,
+      lastName: lName,
+      fullName: computedName,
+      email: user.email || '',
+      phone: user.phone || '',
+      avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(computedName)}&background=2563EB&color=fff&size=150`,
+      department: user.department || 'Engineering',
+      designation: user.designation || 'Staff',
+      joiningDate: user.joinedOn || new Date().toISOString().slice(0, 10),
+      status: (user.status || 'ACTIVE') as EmployeeStatus,
+      employmentType: (user.employmentType || 'FULL_TIME') as EmploymentType,
+      location: user.workLocation || '',
+      manager: user.managerName || '',
+      salaryBand: user.salaryBand || 'Band 4',
+      skills: skillsArray,
+      bio: user.bio || ''
+    };
   }
 
-  private syncDepartmentCounts(): void {
-    const counts: Record<string, number> = {};
-    for (const emp of this.employeesSubject.value) {
-      counts[emp.department] = (counts[emp.department] || 0) + 1;
-    }
-    this.departmentService.recalculateHeadcounts(counts);
+  public mapEmployeeToUserRequest(payload: any): any {
+    const skillsStr = Array.isArray(payload.skills)
+      ? payload.skills.join(', ')
+      : (payload.skillsString || payload.skills || '');
+
+    return {
+      firstName: (payload.firstName || '').trim(),
+      lastName: (payload.lastName || '').trim(),
+      email: (payload.email || '').trim().toLowerCase(),
+      phone: (payload.phone || '').trim(),
+      department: payload.department || 'Engineering',
+      designation: (payload.designation || '').trim(),
+      joinedOn: payload.joiningDate || payload.joinedOn || new Date().toISOString().slice(0, 10),
+      status: payload.status || 'ACTIVE',
+      employmentType: payload.employmentType || 'FULL_TIME',
+      workLocation: (payload.location || payload.workLocation || '').trim(),
+      managerName: (payload.manager || payload.managerName || '').trim(),
+      skills: skillsStr.trim(),
+      bio: (payload.bio || '').trim()
+    };
   }
 
-  public getEmployees(filter?: EmployeeFilter): Observable<{ data: Employee[]; total: number; page: number; pageSize: number }> {
-    let list = [...this.employeesSubject.value];
+  private refreshFromApi(): void {
+    this.http.get<any[]>(this.apiUrl).pipe(
+      map(users => users.map(u => this.mapUserResponseToEmployee(u)))
+    ).subscribe({
+      next: (list) => {
+        this.employeesSubject.next(list);
+        this.syncDepartmentCounts();
+      },
+      error: () => {}
+    });
+  }
+
+  private applyFilter(sourceList: Employee[], filter?: EmployeeFilter): { data: Employee[]; total: number; page: number; pageSize: number } {
+    let list = [...sourceList];
 
     if (filter) {
       if (filter.search) {
@@ -606,14 +659,71 @@ export class EmployeeService {
     const start = (page - 1) * pageSize;
     const paged = list.slice(start, start + pageSize);
 
-    return of({ data: paged, total, page, pageSize }).pipe(delay(100));
+    return { data: paged, total, page, pageSize };
+  }
+
+  private loadInitial(): Employee[] {
+    const raw = localStorage.getItem(this.STORAGE_KEY);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        // fallback to seed
+      }
+    }
+    this.persist(this.initialEmployees);
+    return this.initialEmployees;
+  }
+
+  private persist(employees: Employee[]): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(employees));
+    this.syncDepartmentCounts();
+  }
+
+  private syncDepartmentCounts(): void {
+    const counts: Record<string, number> = {};
+    for (const emp of this.employeesSubject.value) {
+      counts[emp.department] = (counts[emp.department] || 0) + 1;
+    }
+    this.departmentService.recalculateHeadcounts(counts);
+  }
+
+  public getEmployees(filter?: EmployeeFilter): Observable<{ data: Employee[]; total: number; page: number; pageSize: number }> {
+    if (!this.useMock) {
+      return this.http.get<any[]>(this.apiUrl).pipe(
+        map(users => users.map(u => this.mapUserResponseToEmployee(u))),
+        tap(list => {
+          this.employeesSubject.next(list);
+          this.syncDepartmentCounts();
+        }),
+        map(list => this.applyFilter(list, filter))
+      );
+    }
+
+    return of(this.applyFilter(this.employeesSubject.value, filter)).pipe(delay(100));
   }
 
   public getAllEmployees(): Observable<Employee[]> {
+    if (!this.useMock) {
+      return this.http.get<any[]>(this.apiUrl).pipe(
+        map(users => users.map(u => this.mapUserResponseToEmployee(u))),
+        tap(list => {
+          this.employeesSubject.next(list);
+          this.syncDepartmentCounts();
+        })
+      );
+    }
+
     return of(this.employeesSubject.value).pipe(delay(60));
   }
 
   public getEmployeeById(id: string): Observable<Employee | undefined> {
+    if (!this.useMock) {
+      return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+        map(u => this.mapUserResponseToEmployee(u))
+      );
+    }
+
     const emp = this.employeesSubject.value.find(e => e.id === id || e.employeeId === id);
     return of(emp).pipe(delay(60));
   }
@@ -624,6 +734,18 @@ export class EmployeeService {
   }
 
   public addEmployee(payload: Omit<Employee, 'id' | 'employeeId' | 'fullName'> & { employeeId?: string }): Observable<Employee> {
+    if (!this.useMock) {
+      const body = this.mapEmployeeToUserRequest(payload);
+      return this.http.post<any>(this.apiUrl, body).pipe(
+        map(u => this.mapUserResponseToEmployee(u)),
+        tap(newEmp => {
+          const updated = [newEmp, ...this.employeesSubject.value];
+          this.employeesSubject.next(updated);
+          this.syncDepartmentCounts();
+        })
+      );
+    }
+
     const count = this.employeesSubject.value.length + 1001;
     const generatedId = payload.employeeId || `EMP-${count}`;
     const newEmp: Employee = {
@@ -641,6 +763,22 @@ export class EmployeeService {
   }
 
   public updateEmployee(id: string, updates: Partial<Employee>): Observable<Employee> {
+    if (!this.useMock) {
+      const body = this.mapEmployeeToUserRequest(updates);
+      return this.http.put<any>(`${this.apiUrl}/${id}`, body).pipe(
+        map(u => this.mapUserResponseToEmployee(u)),
+        tap(updatedEmp => {
+          const current = this.employeesSubject.value;
+          const idx = current.findIndex(e => e.id === id || e.employeeId === id);
+          if (idx !== -1) {
+            current[idx] = updatedEmp;
+            this.employeesSubject.next([...current]);
+            this.syncDepartmentCounts();
+          }
+        })
+      );
+    }
+
     const current = this.employeesSubject.value;
     const idx = current.findIndex(e => e.id === id || e.employeeId === id);
     if (idx === -1) {
@@ -668,6 +806,21 @@ export class EmployeeService {
   }
 
   public deleteEmployee(id: string): Observable<boolean> {
+    if (!this.useMock) {
+      return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+        map(() => true),
+        tap(() => {
+          const current = this.employeesSubject.value;
+          const emp = current.find(e => e.id === id || e.employeeId === id);
+          if (emp) {
+            emp.status = 'INACTIVE';
+            this.employeesSubject.next([...current]);
+            this.syncDepartmentCounts();
+          }
+        })
+      );
+    }
+
     const current = this.employeesSubject.value;
     const filtered = current.filter(e => e.id !== id && e.employeeId !== id);
     if (filtered.length === current.length) {

@@ -375,9 +375,11 @@
                  class="form-control"
                  formControlName="email"
                  placeholder="name@employeehub.com"
-                 [class.is-invalid]="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched" />
-          <div *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched" class="form-error">
-            Valid work email is required.
+                 [class.is-invalid]="employeeForm.get('email')?.invalid && (employeeForm.get('email')?.touched || isSubmittingForm)" />
+          <div *ngIf="employeeForm.get('email')?.invalid && (employeeForm.get('email')?.touched || isSubmittingForm)" class="form-error">
+            <span *ngIf="employeeForm.get('email')?.errors?.['required']">Valid work email is required.</span>
+            <span *ngIf="employeeForm.get('email')?.errors?.['email']">Enter a valid email address.</span>
+            <span *ngIf="employeeForm.get('email')?.errors?.['duplicateEmail']">{{ emailErrorMessage || 'A user with this email already exists' }}</span>
           </div>
         </div>
 
@@ -388,10 +390,11 @@
                  type="text"
                  class="form-control"
                  formControlName="phone"
-                 placeholder="+1 (555) 000-0000"
-                 [class.is-invalid]="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched" />
-          <div *ngIf="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched" class="form-error">
-            Phone number is required.
+                 placeholder="e.g. 98765 43210"
+                 [class.is-invalid]="employeeForm.get('phone')?.invalid && (employeeForm.get('phone')?.touched || isSubmittingForm)" />
+          <div *ngIf="employeeForm.get('phone')?.invalid && (employeeForm.get('phone')?.touched || isSubmittingForm)" class="form-error">
+            <span *ngIf="employeeForm.get('phone')?.errors?.['required']">Phone number is required.</span>
+            <span *ngIf="employeeForm.get('phone')?.errors?.['pattern']">Enter a 10-digit phone number, optionally starting with +91.</span>
           </div>
         </div>
       </div>
@@ -433,7 +436,7 @@
           <select id="empStatus" class="form-select" formControlName="status">
             <option value="ACTIVE">Active</option>
             <option value="ONBOARDING">Onboarding</option>
-            <option value="ON_LEAVE">On Leave</option>
+            <option value="ON_LEAVE">On leave</option>
             <option value="INACTIVE">Inactive</option>
           </select>
         </div>
@@ -583,9 +586,9 @@
     </div>
   </app-modal>
 
-  <!-- ── DELETE CONFIRMATION MODAL ────────────────────────────────────── -->
+  <!-- ── DEACTIVATE CONFIRMATION MODAL ────────────────────────────────── -->
   <app-modal [isOpen]="isDeleteModalOpen"
-             title="Confirm Record Deletion"
+             title="Deactivate employee"
              size="sm"
              (closeDialog)="isDeleteModalOpen = false">
 
@@ -598,17 +601,19 @@
         </svg>
       </div>
       <div class="warning-content">
-        <h4>Permanently delete employee record?</h4>
+        <h4>Deactivate employee?</h4>
         <p>
-          Are you sure you want to delete <strong>{{ employeeToDelete?.fullName }}</strong> ({{ employeeToDelete?.employeeId }})?
-          This action will immediately remove their personnel dossier and access authorizations.
+          <strong>{{ employeeToDelete?.fullName }}</strong> will be marked as Inactive. You can reactivate them later by editing the status.
         </p>
       </div>
     </div>
 
     <div footer>
-      <button type="button" class="btn btn-secondary" (click)="isDeleteModalOpen = false">Cancel</button>
-      <button type="button" class="btn btn-danger" (click)="executeDelete()">Confirm Delete</button>
+      <button type="button" class="btn btn-secondary" (click)="isDeleteModalOpen = false" [disabled]="isDeleting">Cancel</button>
+      <button type="button" class="btn btn-danger" (click)="executeDelete()" [disabled]="isDeleting">
+        <span *ngIf="!isDeleting">Deactivate</span>
+        <span *ngIf="isDeleting">Deactivating...</span>
+      </button>
     </div>
   </app-modal>
 

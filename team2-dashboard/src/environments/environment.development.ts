@@ -2,6 +2,6 @@
 // Values here override environment.ts via angular.json fileReplacements.
 export const environment = {
   production: false,
-  useMockApi: true,
+  useMockApi: false,
   apiUrl: 'http://localhost:8080/api'
 };

@@ -156,9 +156,9 @@ export class LoginComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const { name, email, password, role, department } = this.registerForm.value;
+    const { name, email, password, department } = this.registerForm.value;
 
-    this.authService.register({ name, email, password, role, department }).subscribe({
+    this.authService.register({ name, email, password, role: 'EMPLOYEE' as UserRole, department }).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.activeTab = 'signin';

@@ -25,7 +25,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { User, UserNotice } from '../models/user.model';
+import { User, UserNotice, UserRole, UserStatus } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -246,17 +246,45 @@ export class UserService {
     return of({ ...updatedUser }).pipe(delay(150));
   }
 
+  public updateRole(id: string, role: UserRole): Observable<User> {
+    if (!this.useMock) {
+      return this.http.patch<User>(`${this.apiUrl}/${id}/role`, { role });
+    }
+
+    const index = this.users.findIndex(u => u.id === id);
+    if (index === -1) {
+      return throwError(() => new Error('User not found'));
+    }
+
+    this.users[index] = { ...this.users[index], role };
+    return of({ ...this.users[index] }).pipe(delay(150));
+  }
+
+  public updateStatus(id: string, status: UserStatus): Observable<User> {
+    if (!this.useMock) {
+      return this.http.patch<User>(`${this.apiUrl}/${id}/status`, { status });
+    }
+
+    const index = this.users.findIndex(u => u.id === id);
+    if (index === -1) {
+      return throwError(() => new Error('User not found'));
+    }
+
+    this.users[index] = { ...this.users[index], status };
+    return of({ ...this.users[index] }).pipe(delay(150));
+  }
+
   public deleteUser(id: string): Observable<void> {
     if (!this.useMock) {
       return this.http.delete<void>(`${this.apiUrl}/${id}`);
     }
 
-    const exists = this.users.some(u => u.id === id);
-    if (!exists) {
+    const index = this.users.findIndex(u => u.id === id);
+    if (index === -1) {
       return throwError(() => new Error('User not found'));
     }
 
-    this.users = this.users.filter(u => u.id !== id);
+    this.users[index] = { ...this.users[index], status: 'INACTIVE' };
     return of(void 0).pipe(delay(150));
   }
 }

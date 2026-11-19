@@ -29,16 +29,7 @@
     <div class="users-header__title-group">
       <h1 class="users-header__title">Users</h1>
       <p class="users-header__subtitle">Manage internal user accounts, department assignments, and portal access roles.</p>
-    </div>
-
-    <div class="users-header__actions" *ngIf="canAddOrEdit">
-      <a routerLink="/users/new" class="btn btn-primary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Add user
-      </a>
+      <p class="users-header__hint text-muted" style="margin-top: 4px; font-size: 0.875rem; color: var(--color-text-muted);">New people are added from the Employees tab.</p>
     </div>
   </header>
 
@@ -83,6 +74,8 @@
                 aria-label="Filter by status">
           <option value="ALL">All Statuses</option>
           <option value="ACTIVE">Active</option>
+          <option value="ONBOARDING">Onboarding</option>
+          <option value="ON_LEAVE">On leave</option>
           <option value="INACTIVE">Inactive</option>
         </select>
 
@@ -148,7 +141,10 @@
                 <div class="user-cell">
                   <app-avatar [name]="user.fullName" size="sm"></app-avatar>
                   <div class="user-cell__meta">
-                    <span class="user-cell__name">{{ user.fullName }}</span>
+                    <span class="user-cell__name">
+                      {{ user.fullName }}
+                      <span *ngIf="user.employeeCode" class="user-cell__code text-muted" style="font-size: 0.8em; margin-left: 4px; color: var(--color-text-muted);">({{ user.employeeCode }})</span>
+                    </span>
                     <span class="user-cell__email">{{ user.email }}</span>
                   </div>
                 </div>
@@ -166,23 +162,23 @@
                   <a *ngIf="canAddOrEdit"
                      [routerLink]="['/users', user.id, 'edit']"
                      class="btn btn-sm btn-secondary action-btn"
-                     title="Edit user">
+                     title="Edit access">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                    Edit
+                    Edit access
                   </a>
                   <button *ngIf="canDelete"
                           type="button"
                           class="btn btn-sm btn-secondary action-btn action-btn--danger"
                           (click)="openDeleteDialog(user)"
-                          title="Delete user">
+                          title="Deactivate user">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    Delete
+                    Deactivate
                   </button>
                 </div>
               </td>
@@ -220,12 +216,12 @@
     </div>
   </section>
 
-  <!-- Delete Confirmation Dialog -->
+  <!-- Deactivate Confirmation Dialog -->
   <app-confirm-dialog
     [isOpen]="isDeleteDialogOpen"
-    title="Delete user"
+    title="Deactivate user"
     [message]="deleteMessage"
-    confirmLabel="Delete"
+    confirmLabel="Deactivate"
     cancelLabel="Cancel"
     [isDanger]="true"
     [isLoading]="isDeleting"

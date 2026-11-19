@@ -77,7 +77,7 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   public get deleteMessage(): string {
     const name = this.userToDelete ? this.userToDelete.fullName : 'this user';
-    return `Are you sure you want to delete ${name}? This cannot be undone.`;
+    return `Are you sure you want to deactivate ${name}? They will be marked as Inactive. You can reactivate them later by editing the status.`;
   }
 
   ngOnInit(): void {
@@ -165,13 +165,14 @@ export class UserListComponent implements OnInit, OnDestroy {
       next: () => {
         this.isDeleting = false;
         this.closeDeleteDialog();
-        this.showNotice(`User "${deletedName}" has been deleted.`, 'success');
+        this.showNotice(`User "${deletedName}" has been deactivated.`, 'success');
         this.loadUsers();
       },
-      error: () => {
+      error: (err: any) => {
         this.isDeleting = false;
         this.closeDeleteDialog();
-        this.showNotice('Could not delete user. Please try again.', 'error');
+        const msg = err?.error?.message || err?.message || 'Could not deactivate user. Please try again.';
+        this.showNotice(msg, 'error');
       }
     });
   }

@@ -1,0 +1,12 @@
+# =============================================================================
+# Local environment overrides (copy to application-local.properties)
+# Do NOT commit application-local.properties to Git.
+# =============================================================================
+
+# Database credentials
+# spring.datasource.username=root
+# spring.datasource.password=your_mysql_password_here
+
+# JWT Secret override (production / custom environment, at least 32 characters)
+# JWT_SECRET=your-custom-production-jwt-secret-string-here-32chars
+

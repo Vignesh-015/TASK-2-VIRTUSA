@@ -22,7 +22,10 @@ export function decodeToken(token: string): JwtPayload | null {
     if (parts.length !== 3) return null;
 
     // base64url → base64 → JSON string
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) {
+      base64 += '=';
+    }
     const json = atob(base64);
     return JSON.parse(json) as JwtPayload;
   } catch {

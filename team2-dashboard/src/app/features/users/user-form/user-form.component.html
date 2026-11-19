@@ -9,9 +9,9 @@
       </svg>
       Back to users
     </button>
-    <h1 class="form-page-title">{{ isEditMode ? 'Edit user' : 'Add user' }}</h1>
+    <h1 class="form-page-title">Edit access</h1>
     <p class="form-page-subtitle">
-      {{ isEditMode ? 'Update user account details, department, and portal access.' : 'Create a new internal user account and assign department access.' }}
+      Manage portal access role and account activation status.
     </p>
   </header>
 
@@ -21,107 +21,51 @@
   </div>
 
   <!-- Form Card -->
-  <div *ngIf="!isLoadingUser" class="card form-card">
+  <div *ngIf="!isLoadingUser && currentUser" class="card form-card">
     <div *ngIf="formError" class="form-alert-error" role="alert">
       {{ formError }}
+    </div>
+
+    <!-- Read-only user info overview -->
+    <div class="user-summary-box">
+      <div class="summary-item">
+        <span class="summary-label">Full Name</span>
+        <span class="summary-value font-medium">{{ currentUser.fullName }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Employee ID</span>
+        <span class="summary-value">{{ currentUser.employeeCode || currentUser.id }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Work Email</span>
+        <span class="summary-value">{{ currentUser.email }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Department</span>
+        <span class="summary-value">{{ currentUser.department }}</span>
+      </div>
     </div>
 
     <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
       <div class="card-body">
         <div class="form-grid">
 
-          <!-- Full Name -->
-          <div class="form-group">
-            <label for="user-fullName" class="form-label">
-              Full name <span class="required">*</span>
-            </label>
-            <input id="user-fullName"
-                   type="text"
-                   class="form-control"
-                   formControlName="fullName"
-                   placeholder="e.g. Aarav Sharma"
-                   [class.is-invalid]="showError('fullName')" />
-            <div *ngIf="showError('fullName')" class="form-error">
-              <span *ngIf="getControl('fullName')?.errors?.['required']">Full name is required.</span>
-              <span *ngIf="!getControl('fullName')?.errors?.['required'] && getControl('fullName')?.errors?.['minlength']">
-                Full name must be at least 3 characters.
-              </span>
-            </div>
-          </div>
-
-          <!-- Email -->
-          <div class="form-group">
-            <label for="user-email" class="form-label">
-              Email <span class="required">*</span>
-            </label>
-            <input id="user-email"
-                   type="email"
-                   class="form-control"
-                   formControlName="email"
-                   placeholder="name@employeehub.com"
-                   [class.is-invalid]="showError('email')" />
-            <div *ngIf="showError('email')" class="form-error">
-              <span *ngIf="getControl('email')?.errors?.['required']">Email is required.</span>
-              <span *ngIf="!getControl('email')?.errors?.['required'] && (getControl('email')?.errors?.['email'] || getControl('email')?.errors?.['pattern'])">
-                Enter a valid email address.
-              </span>
-              <span *ngIf="!getControl('email')?.errors?.['required'] && !getControl('email')?.errors?.['email'] && !getControl('email')?.errors?.['pattern'] && getControl('email')?.errors?.['duplicateEmail']">
-                A user with this email already exists
-              </span>
-            </div>
-          </div>
-
-          <!-- Phone -->
-          <div class="form-group">
-            <label for="user-phone" class="form-label">
-              Phone <span class="required">*</span>
-            </label>
-            <input id="user-phone"
-                   type="tel"
-                   class="form-control"
-                   formControlName="phone"
-                   placeholder="10-digit mobile number"
-                   maxlength="10"
-                   [class.is-invalid]="showError('phone')" />
-            <div *ngIf="showError('phone')" class="form-error">
-              <span *ngIf="getControl('phone')?.errors?.['required']">Phone number is required.</span>
-              <span *ngIf="!getControl('phone')?.errors?.['required'] && getControl('phone')?.errors?.['pattern']">
-                Enter a valid 10-digit phone number.
-              </span>
-            </div>
-          </div>
-
-          <!-- Department -->
-          <div class="form-group">
-            <label for="user-department" class="form-label">
-              Department <span class="required">*</span>
-            </label>
-            <select id="user-department"
-                    class="form-select"
-                    formControlName="department"
-                    [class.is-invalid]="showError('department')">
-              <option value="">Select department</option>
-              <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
-            </select>
-            <div *ngIf="showError('department')" class="form-error">
-              Department is required.
-            </div>
-          </div>
-
           <!-- Role -->
           <div class="form-group">
             <label for="user-role" class="form-label">
-              Role <span class="required">*</span>
+              Portal Role <span class="required">*</span>
             </label>
             <select id="user-role"
                     class="form-select"
                     formControlName="role"
                     [class.is-invalid]="showError('role')">
-              <option value="">Select role</option>
               <option value="ADMIN">Admin</option>
               <option value="HR">HR</option>
               <option value="EMPLOYEE">Employee</option>
             </select>
+            <small *ngIf="!canChangeRole" class="form-hint">
+              Only Administrators can modify portal roles.
+            </small>
             <div *ngIf="showError('role')" class="form-error">
               Role is required.
             </div>
@@ -130,32 +74,19 @@
           <!-- Status -->
           <div class="form-group">
             <label for="user-status" class="form-label">
-              Status <span class="required">*</span>
+              Account Status <span class="required">*</span>
             </label>
             <select id="user-status"
                     class="form-select"
                     formControlName="status"
                     [class.is-invalid]="showError('status')">
               <option value="ACTIVE">Active</option>
+              <option value="ONBOARDING">Onboarding</option>
+              <option value="ON_LEAVE">On leave</option>
               <option value="INACTIVE">Inactive</option>
             </select>
             <div *ngIf="showError('status')" class="form-error">
               Status is required.
-            </div>
-          </div>
-
-          <!-- Joined On -->
-          <div class="form-group">
-            <label for="user-joinedOn" class="form-label">
-              Joined on <span class="required">*</span>
-            </label>
-            <input id="user-joinedOn"
-                   type="date"
-                   class="form-control"
-                   formControlName="joinedOn"
-                   [class.is-invalid]="showError('joinedOn')" />
-            <div *ngIf="showError('joinedOn')" class="form-error">
-              Joining date is required.
             </div>
           </div>
 
@@ -172,11 +103,10 @@
         <button type="submit"
                 class="btn btn-primary"
                 [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Saving...' : 'Save' }}
+          {{ isSubmitting ? 'Saving...' : 'Save access' }}
         </button>
       </div>
     </form>
   </div>
 
 </div>
-

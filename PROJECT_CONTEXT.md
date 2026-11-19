@@ -144,12 +144,12 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 
 | Module | Frontend Status | Backend Status | Key Files | Owner (from git log) |
 | :--- | :--- | :--- | :--- | :--- |
-| Auth | DONE (mock + HTTP client ready) | MISSING | `features/auth/login/*`, `core/services/auth.service.ts`, `core/interceptors/auth.interceptor.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
+| Auth | DONE (mock + HTTP client ready) | IMPLEMENTED (JWT, login, register, security filter, role rules) | `features/auth/login/*`, `core/services/auth.service.ts`, `backend/src/main/java/com/sec/team2/ems/auth/*`, `backend/src/main/java/com/sec/team2/ems/config/SecurityConfig.java` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Dashboard | DONE (mock via `EmployeeService`) | MISSING | `features/dashboard/dashboard-home/*`, `core/services/dashboard.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
-| Users | DONE (useMock=false, real REST API) | IMPLEMENTED | `team2-dashboard/src/app/features/users/*`, `backend/src/main/java/com/sec/team2/ems/user/*` | Vignesh-015 (`ef76182`, `554d4c7`) |
+| Users | DONE (useMock=false, real REST API, access-only management) | IMPLEMENTED (unified with employee fields) | `team2-dashboard/src/app/features/users/*`, `backend/src/main/java/com/sec/team2/ems/user/*` | Vignesh-015 (`ef76182`, `554d4c7`) |
 | Reports | PLACEHOLDER (unrouted) | MISSING | `features/reports/reports/*`, `features/reports/reports.module.ts` | Vignesh-015 (`1bc2347`) |
 | Profile | PARTIAL (no change-password, mock `AuthService.updateProfile`) | MISSING | `features/profile/profile/*` | YUVASHREE R H (`6d88b6f`); Vignesh-015 (`1bc2347`) |
-| HR page (Employees & Departments) | DONE (mock `localStorage` only) | MISSING | `features/employees/*`, `features/departments/*`, `core/services/{employee,department}.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
+| HR page (Employees & Departments) | DONE (EmployeeService connected to /api/users, useMock=false) | UNIFIED (backend `users` table serves as employee source) | `features/employees/*`, `features/departments/*`, `core/services/{employee,department}.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
 | Layout | DONE | N/A | `layout/app-layout/*`, `layout/public-layout/*` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Role-based access | DONE (guards + `users.permissions.ts`) | MISSING | `core/guards/*`, `pages/forbidden/*`, `features/users/users.permissions.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`, `ef76182`) |
 
@@ -165,11 +165,13 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/auth/login` | `{ email, password, rememberMe? }` | `{ token, user }` | `auth.service.ts` |
 | `POST` | `/api/auth/register` | `{ name, email, password, role, department? }` | `{ message, user }` | `auth.service.ts` |
-| `GET` | `/api/users` | — | `User[]` (`{ id, fullName, email, phone, department, role, status, joinedOn }`) | `user.service.ts` |
-| `GET` | `/api/users/{id}` | — | `User` | `user.service.ts` |
-| `POST` | `/api/users` | `Omit<User, 'id'>` | `User` | `user.service.ts` |
-| `PUT` | `/api/users/{id}` | `Omit<User, 'id'>` | `User` | `user.service.ts` |
-| `DELETE` | `/api/users/{id}` | — | `void` | `user.service.ts` |
+| `GET` | `/api/users` | — | `UserResponse[]` (`id`, `employeeCode`, `firstName`, `lastName`, `fullName`, `email`, `phone`, `department`, `designation`, `joinedOn`, `status`, `employmentType`, `workLocation`, `managerName`, `skills`, `bio`, `role`) | `user.service.ts` / `UserController.java` |
+| `GET` | `/api/users/{id}` | — | `UserResponse` | `user.service.ts` / `UserController.java` |
+| `POST` | `/api/users` | `UserRequest` | `UserResponse` (role `EMPLOYEE`, `EMP-XXXX`) | `user.service.ts` / `UserController.java` |
+| `PUT` | `/api/users/{id}` | `UserRequest` | `UserResponse` | `user.service.ts` / `UserController.java` |
+| `PATCH` | `/api/users/{id}/role` | `RoleUpdateRequest` (`role`) | `UserResponse` | `UserController.java` |
+| `PATCH` | `/api/users/{id}/status` | `StatusUpdateRequest` (`status`) | `UserResponse` | `UserController.java` |
+| `DELETE` | `/api/users/{id}` | — | `void` (soft delete: status `INACTIVE`) | `user.service.ts` / `UserController.java` |
 | `GET` | `/api/dashboard/stats` | — | `{ totalUsers, activeUsers, inactiveUsers, departments, onLeave }` | `dashboard.service.ts` |
 | `GET` | `/api/dashboard/departments` | — | `Array<{ department, count }>` | `dashboard.service.ts` |
 | `GET` | `/api/dashboard/recent` | — | `Array<{ id, message, actor, type, timestamp }>` | `dashboard.service.ts` |
@@ -214,4 +216,7 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - `2026-11-12` | Initial context file generated
 - `2026-11-13` | Initialized backend skeleton with Spring Boot 3, MySQL config, H2 profile, CORS, and GlobalExceptionHandler
 - `2026-11-14` | Implemented User module in backend (Entity, Repository, DTOs, Service, Controller, Seeder) and connected Angular frontend (useMock=false)
+- `2026-11-19` | Unified Users and Employees table: added employeeCode, names, designation, employmentType, location, manager, skills, bio; implemented soft delete, PATCH role/status, backfill runner and last-admin guards
+- `2026-11-19` | Connected Employees tab to Spring Boot /api/users REST API (useMock=false); refined Users tab for access management (role and status edits, deactivation)
+- `2026-11-19` | Implemented Authentication & Security backend (JWT service, filter, /api/auth/login, /api/auth/register, demo accounts runner, and method security role rules)
 

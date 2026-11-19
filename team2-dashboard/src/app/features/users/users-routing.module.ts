@@ -9,10 +9,6 @@ const routes: Routes = [
     component: UserListComponent
   },
   {
-    path: 'new',
-    component: UserFormComponent
-  },
-  {
     path: ':id/edit',
     component: UserFormComponent
   }

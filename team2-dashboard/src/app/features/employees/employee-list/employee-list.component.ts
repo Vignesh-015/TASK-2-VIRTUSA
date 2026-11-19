@@ -36,6 +36,8 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   public isFormModalOpen: boolean = false;
   public isDetailModalOpen: boolean = false;
   public isDeleteModalOpen: boolean = false;
+  public isDeleting: boolean = false;
+  public emailErrorMessage: string | null = null;
 
   public isEditing: boolean = false;
   public selectedEmployee: Employee | null = null;
@@ -84,7 +86,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(1)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required]],
+      phone: ['', [Validators.required, Validators.pattern(/^(\+91[ -]?)?[0-9]{10}$/)]],
       department: ['Engineering', [Validators.required]],
       designation: ['', [Validators.required]],
       joiningDate: [new Date().toISOString().slice(0, 10), [Validators.required]],
@@ -153,6 +155,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   public openAddModal(): void {
     this.isEditing = false;
     this.selectedEmployee = null;
+    this.emailErrorMessage = null;
     this.employeeForm.reset({
       firstName: '',
       lastName: '',
@@ -176,6 +179,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   public openEditModal(emp: Employee): void {
     this.isEditing = true;
     this.selectedEmployee = emp;
+    this.emailErrorMessage = null;
     this.employeeForm.patchValue({
       firstName: emp.firstName,
       lastName: emp.lastName,
@@ -228,9 +232,14 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.notificationService.success(`Employee ${updated.fullName} updated successfully.`, 'Updated');
           this.loadEmployees();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.isSubmittingForm = false;
-          this.notificationService.error(err.message || 'Failed to update employee.');
+          const msg = err?.error?.message || err?.message || 'Failed to update employee.';
+          if (msg.toLowerCase().includes('email') || err?.status === 409) {
+            this.employeeForm.get('email')?.setErrors({ duplicateEmail: true });
+            this.emailErrorMessage = msg;
+          }
+          this.notificationService.error(msg);
         }
       });
     } else {
@@ -256,9 +265,14 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.notificationService.success(`Employee ${created.fullName} (${created.employeeId}) added successfully.`, 'Created');
           this.loadEmployees();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.isSubmittingForm = false;
-          this.notificationService.error(err.message || 'Failed to add employee.');
+          const msg = err?.error?.message || err?.message || 'Failed to add employee.';
+          if (msg.toLowerCase().includes('email') || err?.status === 409) {
+            this.employeeForm.get('email')?.setErrors({ duplicateEmail: true });
+            this.emailErrorMessage = msg;
+          }
+          this.notificationService.error(msg);
         }
       });
     }
@@ -273,7 +287,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   // Delete Confirmation Dialog
   public confirmDelete(emp: Employee): void {
     if (!this.authService.isAdmin()) {
-      this.notificationService.warning('Only Administrators possess permission to permanently delete employee records.', 'Permission Denied');
+      this.notificationService.warning('Only Administrators possess permission to deactivate employee records.', 'Permission Denied');
       return;
     }
     this.employeeToDelete = emp;
@@ -283,16 +297,20 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   public executeDelete(): void {
     if (!this.employeeToDelete) return;
     const name = this.employeeToDelete.fullName;
+    this.isDeleting = true;
 
     this.employeeService.deleteEmployee(this.employeeToDelete.id).subscribe({
       next: () => {
+        this.isDeleting = false;
         this.isDeleteModalOpen = false;
         this.employeeToDelete = null;
-        this.notificationService.success(`Employee ${name} permanently removed.`, 'Deleted');
+        this.notificationService.success(`Employee ${name} marked as Inactive.`, 'Deactivated');
         this.loadEmployees();
       },
-      error: (err) => {
-        this.notificationService.error(err.message || 'Failed to delete employee.');
+      error: (err: any) => {
+        this.isDeleting = false;
+        const msg = err?.error?.message || err?.message || 'Failed to deactivate employee.';
+        this.notificationService.error(msg);
       }
     });
   }

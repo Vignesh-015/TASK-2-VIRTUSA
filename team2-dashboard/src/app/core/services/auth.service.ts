@@ -171,7 +171,12 @@ export class AuthService {
         this.saveSession(response.token, response.user);
       }),
       catchError((error: HttpErrorResponse) => {
-        const message = error.error?.message || 'Invalid credentials. Please verify your email and password.';
+        let message = error.error?.message;
+        if (error.status === 0) {
+          message = 'Cannot reach the server. Please check that the backend is running.';
+        } else if (!message) {
+          message = error.error?.error || error.message || 'Invalid credentials. Please verify your email and password.';
+        }
         return throwError(() => new Error(message));
       })
     );
@@ -184,7 +189,12 @@ export class AuthService {
 
     return this.http.post<{ message: string; user: User }>(`${environment.apiUrl}/auth/register`, request).pipe(
       catchError((error: HttpErrorResponse) => {
-        const message = error.error?.message || 'Registration failed. Please try again.';
+        let message = error.error?.message;
+        if (error.status === 0) {
+          message = 'Cannot reach the server. Please check that the backend is running.';
+        } else if (!message) {
+          message = error.error?.error || error.message || 'Registration failed. Please try again.';
+        }
         return throwError(() => new Error(message));
       })
     );
@@ -192,6 +202,13 @@ export class AuthService {
 
   public loginWithDemoAccount(role: UserRole): Observable<LoginResponse> {
     const account = this.demoAccounts[role];
+    if (!environment.useMockApi) {
+      return this.login({
+        email: account.user.email,
+        password: account.password
+      });
+    }
+
     const token = this.generateMockToken(account.user);
     this.saveSession(token, account.user);
     return of({ token, user: account.user }).pipe(delay(200));

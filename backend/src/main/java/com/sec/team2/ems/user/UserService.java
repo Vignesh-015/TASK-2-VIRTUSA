@@ -5,6 +5,8 @@ import com.sec.team2.ems.common.DuplicateResourceException;
 import com.sec.team2.ems.common.ResourceNotFoundException;
 import com.sec.team2.ems.common.Role;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +15,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service class implementing the core business logic for user management.
- * Handles user retrieval, validation of email uniqueness, initial password hashing,
- * and business rules like protecting the last remaining admin from deletion.
+ * Service class implementing the core business logic for user and employee management.
+ * Manages employee profiles, email uniqueness, employee code generation, role/status mutations,
+ * and business rules preventing deactivation or demotion of the last active admin.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -49,11 +52,20 @@ public class UserService {
             throw new DuplicateResourceException("A user with this email already exists");
         }
 
-        // Hash default temporary password for new users
         String passwordHash = passwordEncoder.encode(DEFAULT_TEMP_PASSWORD);
-        User entity = userMapper.toEntity(request, passwordHash);
-        User saved = userRepository.save(entity);
-        return userMapper.toResponse(saved);
+        String employeeCode = generateNextEmployeeCode();
+        User entity = userMapper.toEntity(request, passwordHash, employeeCode, Role.EMPLOYEE);
+
+        try {
+            User saved = userRepository.save(entity);
+            return userMapper.toResponse(saved);
+        } catch (DataIntegrityViolationException ex) {
+            log.warn("Collision detected for code {}. Retrying once with next code.", employeeCode);
+            employeeCode = generateNextEmployeeCode();
+            entity.setEmployeeCode(employeeCode);
+            User saved = userRepository.save(entity);
+            return userMapper.toResponse(saved);
+        }
     }
 
     @Transactional
@@ -71,18 +83,89 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponse updateRole(Long id, RoleUpdateRequest request) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+
+        if (existingUser.getRole() == Role.ADMIN && request.getRole() != Role.ADMIN
+                && existingUser.getStatus() == UserStatus.ACTIVE) {
+            long activeAdminCount = userRepository.countByRoleAndStatus(Role.ADMIN, UserStatus.ACTIVE);
+            if (activeAdminCount <= 1) {
+                throw new BusinessRuleException("The last admin cannot be changed");
+            }
+        }
+
+        existingUser.setRole(request.getRole());
+        User updated = userRepository.save(existingUser);
+        return userMapper.toResponse(updated);
+    }
+
+    @Transactional
+    public UserResponse updateStatus(Long id, StatusUpdateRequest request) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+
+        if (existingUser.getRole() == Role.ADMIN && existingUser.getStatus() == UserStatus.ACTIVE
+                && request.getStatus() == UserStatus.INACTIVE) {
+            long activeAdminCount = userRepository.countByRoleAndStatus(Role.ADMIN, UserStatus.ACTIVE);
+            if (activeAdminCount <= 1) {
+                throw new BusinessRuleException("The last active admin cannot be deactivated");
+            }
+        }
+
+        existingUser.setStatus(request.getStatus());
+        User updated = userRepository.save(existingUser);
+        return userMapper.toResponse(updated);
+    }
+
+    @Transactional
     public void deleteUser(Long id) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
 
-        if (existingUser.getRole() == Role.ADMIN) {
-            long adminCount = userRepository.countByRole(Role.ADMIN);
-            if (adminCount <= 1) {
-                throw new BusinessRuleException("The last admin user cannot be deleted");
+        if (existingUser.getRole() == Role.ADMIN && existingUser.getStatus() == UserStatus.ACTIVE) {
+            long activeAdminCount = userRepository.countByRoleAndStatus(Role.ADMIN, UserStatus.ACTIVE);
+            if (activeAdminCount <= 1) {
+                throw new BusinessRuleException("The last active admin cannot be deactivated");
             }
         }
 
-        userRepository.delete(existingUser);
+        // Soft delete: deactivate the record, never drop the database row
+        existingUser.setStatus(UserStatus.INACTIVE);
+        userRepository.save(existingUser);
+    }
+
+    @Transactional
+    public User registerUser(User user) {
+        if (userRepository.existsByEmailIgnoreCase(user.getEmail().trim())) {
+            throw new DuplicateResourceException("A user with this email already exists");
+        }
+        if (user.getEmployeeCode() == null || user.getEmployeeCode().isBlank()) {
+            user.setEmployeeCode(generateNextEmployeeCode());
+        }
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            log.warn("Collision detected for code {}. Retrying once with next code.", user.getEmployeeCode());
+            user.setEmployeeCode(generateNextEmployeeCode());
+            return userRepository.save(user);
+        }
+    }
+
+    public synchronized String generateNextEmployeeCode() {
+        List<String> codes = userRepository.findAllEmployeeCodes();
+        int maxNumber = 1000;
+        for (String code : codes) {
+            if (code != null && code.startsWith("EMP-")) {
+                try {
+                    int num = Integer.parseInt(code.substring(4).trim());
+                    if (num > maxNumber) {
+                        maxNumber = num;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return "EMP-" + (maxNumber + 1);
     }
 }
-

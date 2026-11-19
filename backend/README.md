@@ -55,9 +55,33 @@ H2 Console (when running with `h2` profile): `http://localhost:8080/api/h2-conso
 - Windows: `mvnw.cmd -q -DskipTests package`
 - Linux / macOS: `./mvnw -q -DskipTests package`
 
+## Authentication & Security Module (`com.sec.team2.ems.auth`)
+
+The Authentication and Security module manages JWT authentication, token issuance and verification, credentials validation, password hashing via BCrypt, and method-level authorization.
+
+- **Stateless JWT:** Issues HMAC-SHA256 tokens valid for 120 minutes with claims `sub`, `name`, `role`, `iat`, `exp`.
+- **Protected Endpoints:** Enforces role-based permissions (`@PreAuthorize`) and returns 401/403 JSON in standard `ApiError` format.
+- **Demo Accounts:** Automatically provisions demo accounts on startup when `app.seed-demo-accounts=true`.
+
+Detailed architecture and design documentation is available at [docs/AUTH_MODULE.md](docs/AUTH_MODULE.md).
+
+### Auth REST Endpoints
+
+Base path: `http://localhost:8080/api/auth`
+
+| Method | Endpoint | Description | Request Body | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/auth/login` | Authenticate user credentials and issue JWT token | `LoginRequest` (`email`, `password`) | `200 OK` (`401` invalid/inactive) |
+| `POST` | `/auth/register` | Self-register employee account (role defaults to `EMPLOYEE`) | `RegisterRequest` (`name`, `email`, `password`, `department`) | `201 Created` (`409` duplicate email) |
+
 ## User Module (`com.sec.team2.ems.user`)
 
-The User Management module provides full CRUD operations for employee accounts. On startup, if the database is empty, `UserDataSeeder` automatically populates 12 initial employee records across Engineering, HR, Finance, Sales, Operations, and Support.
+The User Management module serves as the single source of truth for both the Employees tab (HR view) and Users tab (access view). It manages employee profile details (employee code, designation, employment type, location, manager, skills, bio) alongside security roles and statuses (`ACTIVE`, `ONBOARDING`, `ON_LEAVE`, `INACTIVE`).
+
+- **Soft Delete:** `DELETE` deactivates the record (`INACTIVE`) without deleting rows.
+- **Admin Guard:** Protects the last active administrator from being deactivated or changed to a non-admin role.
+- **Data Backfill:** `UserDataBackfill` automatically populates employee codes and missing fields on existing rows on startup.
+- **Data Seeder:** `UserDataSeeder` automatically populates 12 initial employee records if the database is empty.
 
 Detailed architecture and design documentation is available at [docs/USER_MODULE.md](docs/USER_MODULE.md).
 
@@ -69,9 +93,11 @@ Base path: `http://localhost:8080/api/users`
 | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/users` | List all employee accounts ordered by ID | None | `200 OK` |
 | `GET` | `/users/{id}` | Get employee details by ID | None | `200 OK` (`404` if not found) |
-| `POST` | `/users` | Create a new employee | `UserRequest` | `201 Created` (`400` validation, `409` duplicate) |
+| `POST` | `/users` | Create a new employee (role defaults to `EMPLOYEE`, generates `EMP-XXXX`) | `UserRequest` | `201 Created` (`400` validation, `409` duplicate) |
 | `PUT` | `/users/{id}` | Update existing employee details | `UserRequest` | `200 OK` (`404` if not found, `409` duplicate) |
-| `DELETE` | `/users/{id}` | Delete employee account (protects last admin) | None | `204 No Content` (`409` if last admin) |
+| `PATCH` | `/users/{id}/role` | Update user access role | `RoleUpdateRequest` | `200 OK` (`409` if last admin) |
+| `PATCH` | `/users/{id}/status` | Update employee status | `StatusUpdateRequest` | `200 OK` (`409` if last active admin) |
+| `DELETE` | `/users/{id}` | Soft delete / deactivate employee account | None | `204 No Content` (`409` if last active admin) |
 
 ## Package Structure & Module Owners
 

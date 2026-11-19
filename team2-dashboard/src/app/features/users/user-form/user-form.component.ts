@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
-import { USER_DEPARTMENTS, UserRole, UserStatus } from '../models/user.model';
+import { User, UserRole, UserStatus } from '../models/user.model';
 import { UserService } from '../services/user.service';
-import { canAddOrEditUsers } from '../users.permissions';
+import { canAddOrEditUsers, canChangeRole } from '../users.permissions';
 
 @Component({
   selector: 'app-user-form',
@@ -13,17 +14,16 @@ import { canAddOrEditUsers } from '../users.permissions';
   styleUrls: ['./user-form.component.scss']
 })
 export class UserFormComponent implements OnInit, OnDestroy {
-  public readonly departments = USER_DEPARTMENTS;
-
   public userForm!: FormGroup;
-  public isEditMode: boolean = false;
+  public currentUser: User | null = null;
   public isLoadingUser: boolean = false;
   public isSubmitting: boolean = false;
   public submitAttempted: boolean = false;
   public formError: string | null = null;
 
   private editingUserId: string | null = null;
-  private existingEmails: { id: string; email: string }[] = [];
+  private originalRole: UserRole | null = null;
+  private originalStatus: UserStatus | null = null;
   private routeSub?: Subscription;
 
   constructor(
@@ -34,25 +34,25 @@ export class UserFormComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
+  public get canChangeRole(): boolean {
+    return canChangeRole(this.authService.currentRole);
+  }
+
   ngOnInit(): void {
-    // replace with route guard in guards task
     if (!canAddOrEditUsers(this.authService.currentRole)) {
       this.router.navigate(['/forbidden']);
       return;
     }
 
     this.buildForm();
-    this.loadExistingEmails();
 
     this.routeSub = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
-        this.isEditMode = true;
         this.editingUserId = id;
         this.loadUser(id);
       } else {
-        this.isEditMode = false;
-        this.editingUserId = null;
+        this.router.navigate(['/users']);
       }
     });
   }
@@ -79,38 +79,54 @@ export class UserFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const raw = this.userForm.value;
-    const payload = {
-      fullName: (raw.fullName || '').trim(),
-      email: (raw.email || '').trim().toLowerCase(),
-      phone: (raw.phone || '').trim(),
-      department: raw.department,
-      role: raw.role as UserRole,
-      status: raw.status as UserStatus,
-      joinedOn: raw.joinedOn
-    };
+    if (!this.editingUserId || !this.currentUser) {
+      return;
+    }
+
+    const raw = this.userForm.getRawValue() as { role: UserRole; status: UserStatus };
+    const roleChanged = raw.role !== this.originalRole;
+    const statusChanged = raw.status !== this.originalStatus;
+
+    if (!roleChanged && !statusChanged) {
+      this.userService.setNotice('No changes made.', 'success');
+      this.router.navigate(['/users']);
+      return;
+    }
 
     this.isSubmitting = true;
 
-    if (this.isEditMode && this.editingUserId) {
-      this.userService.updateUser(this.editingUserId, payload).subscribe({
+    if (roleChanged && !statusChanged) {
+      this.userService.updateRole(this.editingUserId, raw.role).subscribe({
         next: (updated) => {
           this.isSubmitting = false;
-          this.userService.setNotice(`User "${updated.fullName}" updated successfully.`, 'success');
+          this.userService.setNotice(`Access role updated for "${updated.fullName}".`, 'success');
           this.router.navigate(['/users']);
         },
-        error: (err: Error) => {
+        error: (err) => {
+          this.handleSaveError(err);
+        }
+      });
+    } else if (statusChanged && !roleChanged) {
+      this.userService.updateStatus(this.editingUserId, raw.status).subscribe({
+        next: (updated) => {
+          this.isSubmitting = false;
+          this.userService.setNotice(`Status updated for "${updated.fullName}".`, 'success');
+          this.router.navigate(['/users']);
+        },
+        error: (err) => {
           this.handleSaveError(err);
         }
       });
     } else {
-      this.userService.addUser(payload).subscribe({
-        next: (created) => {
+      this.userService.updateRole(this.editingUserId, raw.role).pipe(
+        switchMap(() => this.userService.updateStatus(this.editingUserId!, raw.status))
+      ).subscribe({
+        next: (updated) => {
           this.isSubmitting = false;
-          this.userService.setNotice(`User "${created.fullName}" added successfully.`, 'success');
+          this.userService.setNotice(`Access role and status updated for "${updated.fullName}".`, 'success');
           this.router.navigate(['/users']);
         },
-        error: (err: Error) => {
+        error: (err) => {
           this.handleSaveError(err);
         }
       });
@@ -125,36 +141,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
   }
 
   private buildForm(): void {
-    const today = new Date().toISOString().slice(0, 10);
-
     this.userForm = this.fb.group({
-      fullName: ['', [Validators.required, this.trimmedMinLengthValidator(3)]],
-      email: [
-        '',
-        [
-          Validators.required,
-          Validators.email,
-          Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
-          this.uniqueEmailValidator()
-        ]
-      ],
-      phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      department: ['', [Validators.required]],
       role: ['EMPLOYEE', [Validators.required]],
-      status: ['ACTIVE', [Validators.required]],
-      joinedOn: [today, [Validators.required]]
-    });
-  }
-
-  private loadExistingEmails(): void {
-    this.userService.getUsers().subscribe({
-      next: (users) => {
-        this.existingEmails = users.map(u => ({
-          id: String(u.id),
-          email: u.email.trim().toLowerCase()
-        }));
-        this.userForm.get('email')?.updateValueAndValidity({ emitEvent: false });
-      }
+      status: ['ACTIVE', [Validators.required]]
     });
   }
 
@@ -168,17 +157,23 @@ export class UserFormComponent implements OnInit, OnDestroy {
           this.router.navigate(['/users']);
           return;
         }
+
+        this.currentUser = user;
+        this.originalRole = user.role;
+        this.originalStatus = user.status;
+
         this.userForm.patchValue({
-          fullName: user.fullName,
-          email: user.email,
-          phone: user.phone,
-          department: user.department,
           role: user.role,
-          status: user.status,
-          joinedOn: user.joinedOn
+          status: user.status
         });
+
+        if (!this.canChangeRole) {
+          this.userForm.get('role')?.disable();
+        } else {
+          this.userForm.get('role')?.enable();
+        }
+
         this.userForm.markAsPristine();
-        this.userForm.get('email')?.updateValueAndValidity({ emitEvent: false });
       },
       error: () => {
         this.isLoadingUser = false;
@@ -188,36 +183,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private trimmedMinLengthValidator(min: number): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const val = typeof control.value === 'string' ? control.value.trim() : '';
-      if (!val) {
-        return { required: true };
-      }
-      return val.length < min ? { minlength: { requiredLength: min, actualLength: val.length } } : null;
-    };
-  }
-
-  private uniqueEmailValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = typeof control.value === 'string' ? control.value.trim().toLowerCase() : '';
-      if (!value) {
-        return null;
-      }
-      const duplicate = this.existingEmails.some(
-        entry => entry.email === value && String(entry.id) !== String(this.editingUserId)
-      );
-      return duplicate ? { duplicateEmail: true } : null;
-    };
-  }
-
   private handleSaveError(err: any): void {
     this.isSubmitting = false;
-    const message = err?.error?.message || err?.message || 'Unable to save user. Please try again.';
-    if (message.toLowerCase().includes('email')) {
-      this.userForm.get('email')?.setErrors({ duplicateEmail: true });
-    }
+    const message = err?.error?.message || err?.message || 'Unable to update user access. Please try again.';
     this.formError = message;
   }
 }
-

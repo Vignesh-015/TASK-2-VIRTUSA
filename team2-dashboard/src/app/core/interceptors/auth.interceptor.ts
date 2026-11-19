@@ -23,9 +23,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const isApiUrl = request.url.startsWith(environment.apiUrl);
     const isAuthEndpoint =
       request.url.includes('/auth/login') ||
-      request.url.includes('/login') ||
-      request.url.includes('/auth/register') ||
-      request.url.includes('/register');
+      request.url.includes('/auth/register');
 
     let authReq = request;
     const token = this.authService.getToken();
