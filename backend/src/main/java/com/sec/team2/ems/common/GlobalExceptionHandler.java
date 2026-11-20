@@ -32,6 +32,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(AuthenticationFailedException.class)
     public ResponseEntity<ApiError> handleAuthenticationFailed(AuthenticationFailedException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);

@@ -99,6 +99,22 @@ Base path: `http://localhost:8080/api/users`
 | `PATCH` | `/users/{id}/status` | Update employee status | `StatusUpdateRequest` | `200 OK` (`409` if last active admin) |
 | `DELETE` | `/users/{id}` | Soft delete / deactivate employee account | None | `204 No Content` (`409` if last active admin) |
 
+## Profile Module (`com.sec.team2.ems.profile`)
+
+The Profile module provides self-service profile inspection, personal contact/skills updates, and password changes for the currently authenticated employee. The identity is resolved strictly from the JWT SecurityContext (no ID in URL).
+
+Detailed architecture and design documentation is available at [docs/PROFILE_MODULE.md](docs/PROFILE_MODULE.md).
+
+### Profile REST Endpoints
+
+Base path: `http://localhost:8080/api/profile`
+
+| Method | Endpoint | Description | Request Body | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/profile/me` | Retrieve profile of the currently authenticated user | None | `200 OK` (`401` unauthenticated) |
+| `PUT` | `/profile/me` | Update permitted profile fields (names, phone, location, skills, bio, emergency contact) | `ProfileUpdateRequest` | `200 OK` (`400` validation, `401` unauthenticated) |
+| `POST` | `/profile/change-password` | Change authenticated user's password | `ChangePasswordRequest` | `200 OK` (`400` validation/mismatch, `401` unauthenticated) |
+
 ## Package Structure & Module Owners
 
 Base package: `com.sec.team2.ems`

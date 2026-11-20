@@ -86,6 +86,15 @@ public class User {
     @Column(length = 1000)
     private String bio;
 
+    @Column(name = "emergency_contact_name", length = 100)
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_relation", length = 50)
+    private String emergencyContactRelation;
+
+    @Column(name = "emergency_contact_phone", length = 20)
+    private String emergencyContactPhone;
+
     @Column(nullable = false)
     private String password;
 }
