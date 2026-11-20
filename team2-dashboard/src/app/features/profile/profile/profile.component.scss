@@ -4,6 +4,31 @@
   gap: 20px;
 }
 
+/* ─── LOADING STATE ──────────────────────────────────────────────────────── */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+
+  .spinner-lg {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(37, 99, 235, 0.2);
+    border-top-color: var(--color-primary-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ─── HERO CARD ──────────────────────────────────────────────────────────── */
 .profile-hero-card {
   overflow: hidden;
@@ -290,8 +315,78 @@
   }
 }
 
-/* Edit Profile Form */
-.edit-profile-form {
+/* ─── READ-ONLY FIELDS IN EDIT TAB ───────────────────────────────────────── */
+.readonly-section {
+  padding: 14px 18px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+
+  .readonly-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-heading);
+    margin: 0 0 12px 0;
+  }
+
+  .readonly-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .readonly-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .readonly-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+
+    .readonly-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-main);
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+  }
+}
+
+/* ─── ALERT BANNERS ──────────────────────────────────────────────────────── */
+.alert-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 18px;
+
+  &--success {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
+  }
+
+  &--error {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid var(--color-danger-border);
+  }
+}
+
+/* ─── FORM ELEMENTS ──────────────────────────────────────────────────────── */
+.edit-profile-form,
+.password-form {
   display: flex;
   flex-direction: column;
 
@@ -305,11 +400,50 @@
     }
   }
 
+  .section-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-heading);
+    margin: 16px 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
   .form-actions-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 16px;
+    margin-top: 20px;
+  }
+}
+
+/* ─── PASSWORD INPUT GROUP WITH TOGGLE ───────────────────────────────────── */
+.password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .form-control {
+    padding-right: 42px;
+  }
+
+  .btn-toggle-password {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xs);
+
+    &:hover {
+      color: var(--color-text-main);
+      background-color: var(--color-surface-muted);
+    }
   }
 }
