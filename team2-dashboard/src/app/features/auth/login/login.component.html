@@ -129,47 +129,12 @@
             <span class="spinner"></span> Authenticating...
           </span>
         </button>
+
+        <!-- Switch Tab / Help Hint -->
+        <p class="switch-tab-hint">
+          Don't have an account? Use <button type="button" class="btn-link-inline" (click)="setTab('signup')">Create Account</button>, or ask your administrator.
+        </p>
       </form>
-
-      <!-- ── QUICK DEMO LOGIN BUTTONS (PLACED HERE ON LOGIN PAGE) ──── -->
-      <div class="demo-section">
-        <div class="demo-divider">
-          <span>Quick Demo Access (Internship Evaluation)</span>
-        </div>
-        <p class="demo-hint">Click any role below to authenticate instantly and view its tailored dashboard:</p>
-
-        <div class="demo-buttons-grid">
-          <!-- Admin Demo Card -->
-          <button type="button" class="demo-card" (click)="quickDemoLogin('ADMIN')">
-            <div class="demo-card-top">
-              <span class="badge badge-primary">ADMIN</span>
-              <span class="demo-card-action">Instant Sign In &rarr;</span>
-            </div>
-            <div class="demo-card-name">Alexander Hayes</div>
-            <div class="demo-card-info">Full Administrator &bull; Employees, Departments, & Metrics</div>
-          </button>
-
-          <!-- HR Demo Card -->
-          <button type="button" class="demo-card" (click)="quickDemoLogin('HR')">
-            <div class="demo-card-top">
-              <span class="badge badge-info">HR SPECIALIST</span>
-              <span class="demo-card-action">Instant Sign In &rarr;</span>
-            </div>
-            <div class="demo-card-name">Sarah Jenkins</div>
-            <div class="demo-card-info">People Operations &bull; Staff directory & department view</div>
-          </button>
-
-          <!-- Employee Demo Card -->
-          <button type="button" class="demo-card" (click)="quickDemoLogin('EMPLOYEE')">
-            <div class="demo-card-top">
-              <span class="badge badge-neutral">EMPLOYEE</span>
-              <span class="demo-card-action">Instant Sign In &rarr;</span>
-            </div>
-            <div class="demo-card-name">Liam O'Connor</div>
-            <div class="demo-card-info">Staff Self-Service &bull; Personal profile & workspace</div>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- ── SIGN UP / REGISTRATION FORM ───────────────────────────────── -->

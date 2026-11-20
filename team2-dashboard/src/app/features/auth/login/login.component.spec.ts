@@ -180,12 +180,13 @@ describe('LoginComponent Real Authentication Integration', () => {
     expect(alertEl.textContent).toContain('A user with this email address already exists.');
   });
 
-  it('7. should handle quick demo login for all roles', () => {
-    authServiceSpy.loginWithDemoAccount.and.returnValue(of({ token: 'jwt-token', user: mockUser }));
+  it('7. should not display quick demo access cards and should show account hint', () => {
+    const demoSection = fixture.nativeElement.querySelector('.demo-section');
+    expect(demoSection).toBeFalsy();
 
-    component.quickDemoLogin('ADMIN');
-    expect(authServiceSpy.loginWithDemoAccount).toHaveBeenCalledWith('ADMIN');
-    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+    const hintEl = fixture.nativeElement.querySelector('.switch-tab-hint');
+    expect(hintEl).toBeTruthy();
+    expect(hintEl.textContent).toContain("Don't have an account? Use Create Account, or ask your administrator.");
   });
 });
 

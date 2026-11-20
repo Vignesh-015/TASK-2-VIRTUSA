@@ -5,6 +5,7 @@ import { delay, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Employee, EmployeeFilter, EmployeeStatus, EmploymentType } from '../models/employee.model';
 import { DepartmentService } from './department.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -542,7 +543,8 @@ export class EmployeeService {
 
   constructor(
     private http: HttpClient,
-    private departmentService: DepartmentService
+    private departmentService: DepartmentService,
+    private authService: AuthService
   ) {
     this.syncDepartmentCounts();
     if (!this.useMock) {
@@ -681,6 +683,7 @@ export class EmployeeService {
   }
 
   private syncDepartmentCounts(): void {
+    if (!this.employeesSubject) return;
     const counts: Record<string, number> = {};
     for (const emp of this.employeesSubject.value) {
       counts[emp.department] = (counts[emp.department] || 0) + 1;
@@ -775,6 +778,7 @@ export class EmployeeService {
             this.employeesSubject.next([...current]);
             this.syncDepartmentCounts();
           }
+          this.syncAuthIfCurrentUser(updatedEmp);
         })
       );
     }
@@ -802,7 +806,21 @@ export class EmployeeService {
     updatedList[idx] = updatedEmp;
     this.employeesSubject.next(updatedList);
     this.persist(updatedList);
+    this.syncAuthIfCurrentUser(updatedEmp);
     return of(updatedEmp).pipe(delay(150));
+  }
+
+  private syncAuthIfCurrentUser(emp: Employee): void {
+    const cur = this.authService.currentUser;
+    if (cur && (cur.id === emp.id || cur.email.toLowerCase() === emp.email.toLowerCase())) {
+      this.authService.updateProfile({
+        name: emp.fullName,
+        department: emp.department,
+        designation: emp.designation,
+        phone: emp.phone,
+        location: emp.location
+      });
+    }
   }
 
   public deleteEmployee(id: string): Observable<boolean> {

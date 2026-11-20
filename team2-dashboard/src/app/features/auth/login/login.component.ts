@@ -104,24 +104,6 @@ export class LoginComponent implements OnInit {
     this.registerForm.patchValue({ role });
   }
 
-  // 1-Click Quick Demo Login (Admin, HR, Employee)
-  public quickDemoLogin(role: UserRole): void {
-    this.isLoading = true;
-    this.errorMessage = null;
-
-    this.authService.loginWithDemoAccount(role).subscribe({
-      next: (res) => {
-        this.isLoading = false;
-        this.notificationService.success(`Welcome, ${res.user.name} (${role})`, 'Signed In');
-        this.redirectAfterLogin(res.user.role);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errorMessage = err.message || 'Demo authentication failed.';
-      }
-    });
-  }
-
   public onSignInSubmit(): void {
     this.errorMessage = null;
 

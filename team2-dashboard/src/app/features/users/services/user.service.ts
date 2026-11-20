@@ -23,9 +23,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { User, UserNotice, UserRole, UserStatus } from '../models/user.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -163,7 +164,10 @@ export class UserService {
     }
   ];
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   public setNotice(message: string, type: 'success' | 'error' = 'success'): void {
     this.pendingNotice = { message, type };
@@ -222,7 +226,9 @@ export class UserService {
 
   public updateUser(id: string, user: Omit<User, 'id'>): Observable<User> {
     if (!this.useMock) {
-      return this.http.put<User>(`${this.apiUrl}/${id}`, user);
+      return this.http.put<User>(`${this.apiUrl}/${id}`, user).pipe(
+        tap(updated => this.syncAuthIfCurrentUser(updated))
+      );
     }
 
     const index = this.users.findIndex(u => u.id === id);
@@ -243,7 +249,19 @@ export class UserService {
     };
 
     this.users = this.users.map(u => (u.id === id ? updatedUser : u));
+    this.syncAuthIfCurrentUser(updatedUser);
     return of({ ...updatedUser }).pipe(delay(150));
+  }
+
+  private syncAuthIfCurrentUser(u: User): void {
+    const cur = this.authService.currentUser;
+    if (cur && (cur.id === u.id || cur.email.toLowerCase() === u.email.toLowerCase())) {
+      this.authService.updateProfile({
+        name: u.fullName,
+        department: u.department,
+        phone: u.phone
+      });
+    }
   }
 
   public updateRole(id: string, role: UserRole): Observable<User> {
