@@ -66,8 +66,8 @@
       <app-stat-card
         title="Total Workforce"
         [value]="stats.totalEmployees"
-        subtitle="24 active company contracts"
-        trendText="+12% YoY"
+        [subtitle]="workforceSubtitle"
+        [trendText]="addedThisMonthText"
         [trendPositive]="true"
         [isLoading]="isLoading">
         <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -82,7 +82,7 @@
       <app-stat-card
         title="Active Staff"
         [value]="stats.activeEmployees"
-        subtitle="83.3% operational engagement"
+        [subtitle]="activeStaffSubtitle"
         trendText="Engaged"
         [trendPositive]="true"
         iconClass="icon-teal"
@@ -111,7 +111,7 @@
       <app-stat-card
         title="Departments"
         [value]="stats.totalDepartments"
-        subtitle="6 functional business units"
+        [subtitle]="departmentsSubtitle"
         trendText="Operational"
         [trendPositive]="true"
         iconClass="icon-amber"
@@ -133,7 +133,7 @@
         <div class="card-header">
           <div class="card-title-group">
             <h2 class="card-title">Employee Distribution by Department</h2>
-            <p class="card-subtitle">Exact headcount allocation across 6 business units (24 staff total)</p>
+            <p class="card-subtitle">{{ distributionSubtitle }}</p>
           </div>
           <button *ngIf="userRole === 'ADMIN'" type="button" class="btn btn-sm btn-ghost" (click)="navigateToDepartments()">
             Departments &rarr;

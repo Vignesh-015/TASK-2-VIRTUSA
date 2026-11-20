@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@Order(1)
+@Order(10)
 @RequiredArgsConstructor
 public class UserDataSeeder implements CommandLineRunner {
 
@@ -57,7 +57,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 2. Admin (Operations)
+                // 2. Admin (Finance & Operations)
                 User.builder()
                         .employeeCode("EMP-1002")
                         .firstName("Aarav")
@@ -65,7 +65,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Aarav Sharma")
                         .email("aarav.sharma@ems.com")
                         .phone("9820145678")
-                        .department("Operations")
+                        .department("Finance & Operations")
                         .designation("Operations Director")
                         .role(Role.ADMIN)
                         .status(UserStatus.ACTIVE)
@@ -78,7 +78,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 3. HR (HR)
+                // 3. HR (Human Resources)
                 User.builder()
                         .employeeCode("EMP-1003")
                         .firstName("Kavita")
@@ -86,7 +86,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Kavita Deshmukh")
                         .email("kavita.deshmukh@ems.com")
                         .phone("9811234567")
-                        .department("HR")
+                        .department("Human Resources")
                         .designation("Lead HR Business Partner")
                         .role(Role.HR)
                         .status(UserStatus.ACTIVE)
@@ -99,7 +99,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 4. HR (HR) - ONBOARDING
+                // 4. HR (Human Resources) - ONBOARDING
                 User.builder()
                         .employeeCode("EMP-1004")
                         .firstName("Rohan")
@@ -107,7 +107,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Rohan Kulkarni")
                         .email("rohan.kulkarni@ems.com")
                         .phone("9765432109")
-                        .department("HR")
+                        .department("Human Resources")
                         .designation("HR Specialist")
                         .role(Role.HR)
                         .status(UserStatus.ONBOARDING)
@@ -120,7 +120,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 5. HR (HR)
+                // 5. HR (Human Resources)
                 User.builder()
                         .employeeCode("EMP-1005")
                         .firstName("Ananya")
@@ -128,7 +128,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Ananya Iyer")
                         .email("ananya.iyer@ems.com")
                         .phone("9845012345")
-                        .department("HR")
+                        .department("Human Resources")
                         .designation("Senior HR Associate")
                         .role(Role.HR)
                         .status(UserStatus.ACTIVE)
@@ -162,7 +162,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 7. Employee (Finance) - Inactive
+                // 7. Employee (Finance & Operations) - Inactive
                 User.builder()
                         .employeeCode("EMP-1007")
                         .firstName("Vikramaditya")
@@ -170,7 +170,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Vikramaditya Rao")
                         .email("vikram.rao@ems.com")
                         .phone("9900112233")
-                        .department("Finance")
+                        .department("Finance & Operations")
                         .designation("Senior Financial Analyst")
                         .role(Role.EMPLOYEE)
                         .status(UserStatus.INACTIVE)
@@ -183,7 +183,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 8. Employee (Finance)
+                // 8. Employee (Finance & Operations)
                 User.builder()
                         .employeeCode("EMP-1008")
                         .firstName("Sneha")
@@ -191,7 +191,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Sneha Patel")
                         .email("sneha.patel@ems.com")
                         .phone("9822334455")
-                        .department("Finance")
+                        .department("Finance & Operations")
                         .designation("Finance Manager")
                         .role(Role.EMPLOYEE)
                         .status(UserStatus.ACTIVE)
@@ -204,7 +204,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 9. Employee (Sales) - ON_LEAVE
+                // 9. Employee (Sales & Partnerships) - ON_LEAVE
                 User.builder()
                         .employeeCode("EMP-1009")
                         .firstName("Karthik")
@@ -212,7 +212,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Karthik Subramanian")
                         .email("karthik.s@ems.com")
                         .phone("9840987654")
-                        .department("Sales")
+                        .department("Sales & Partnerships")
                         .designation("Account Executive")
                         .role(Role.EMPLOYEE)
                         .status(UserStatus.ON_LEAVE)
@@ -225,7 +225,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .password(defaultPasswordHash)
                         .build(),
 
-                // 10. Employee (Operations) - Inactive / Contract
+                // 10. Employee (Finance & Operations) - Inactive / Contract
                 User.builder()
                         .employeeCode("EMP-1010")
                         .firstName("Siddharth")
@@ -233,7 +233,7 @@ public class UserDataSeeder implements CommandLineRunner {
                         .fullName("Siddharth Verma")
                         .email("siddharth.verma@ems.com")
                         .phone("9818776655")
-                        .department("Operations")
+                        .department("Finance & Operations")
                         .designation("Logistics Coordinator")
                         .role(Role.EMPLOYEE)
                         .status(UserStatus.INACTIVE)

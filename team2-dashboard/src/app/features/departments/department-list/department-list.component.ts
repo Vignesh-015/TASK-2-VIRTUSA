@@ -23,10 +23,13 @@ export class DepartmentListComponent implements OnInit {
   public selectedDepartment: Department | null = null;
   public departmentForm!: FormGroup;
   public isSubmittingForm: boolean = false;
+  public nameErrorMessage: string | null = null;
 
   // Delete Modal
   public isDeleteModalOpen: boolean = false;
   public departmentToDelete: Department | null = null;
+  public isDeleting: boolean = false;
+  public deleteErrorMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -36,6 +39,14 @@ export class DepartmentListComponent implements OnInit {
     private notificationService: NotificationService,
     private router: Router
   ) {}
+
+  public get canAddOrEdit(): boolean {
+    return this.authService.hasRole(['ADMIN', 'HR']);
+  }
+
+  public get canDelete(): boolean {
+    return this.authService.isAdmin();
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -57,15 +68,15 @@ export class DepartmentListComponent implements OnInit {
 
   public loadDepartments(): void {
     this.isLoading = true;
-    this.departmentService.getDepartments().subscribe({
+    this.departmentService.getDepartments(true).subscribe({
       next: (data) => {
         this.departments = data;
         this.totalHeadcount = data.reduce((acc, curr) => acc + (curr.employeeCount || 0), 0);
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
         this.isLoading = false;
-        this.notificationService.error('Failed to load departments.');
+        this.notificationService.error(err.message || 'Failed to load departments.');
       }
     });
   }
@@ -75,12 +86,13 @@ export class DepartmentListComponent implements OnInit {
   }
 
   public openAddModal(): void {
-    if (!this.authService.isAdmin()) {
-      this.notificationService.warning('Only Administrators can add new departments.', 'Permission Denied');
+    if (!this.canAddOrEdit) {
+      this.notificationService.warning('Only Administrators and HR can add new departments.', 'Permission Denied');
       return;
     }
     this.isEditing = false;
     this.selectedDepartment = null;
+    this.nameErrorMessage = null;
     this.departmentForm.reset({
       code: '',
       name: '',
@@ -95,12 +107,13 @@ export class DepartmentListComponent implements OnInit {
   }
 
   public openEditModal(dept: Department): void {
-    if (!this.authService.isAdmin()) {
-      this.notificationService.warning('Only Administrators can edit department settings.', 'Permission Denied');
+    if (!this.canAddOrEdit) {
+      this.notificationService.warning('Only Administrators and HR can edit department settings.', 'Permission Denied');
       return;
     }
     this.isEditing = true;
     this.selectedDepartment = dept;
+    this.nameErrorMessage = null;
     this.departmentForm.patchValue({
       code: dept.code,
       name: dept.name,
@@ -115,6 +128,7 @@ export class DepartmentListComponent implements OnInit {
   }
 
   public saveDepartment(): void {
+    this.nameErrorMessage = null;
     if (this.departmentForm.invalid) {
       this.departmentForm.markAllAsTouched();
       return;
@@ -128,12 +142,17 @@ export class DepartmentListComponent implements OnInit {
         next: (updated) => {
           this.isSubmittingForm = false;
           this.isFormModalOpen = false;
+          this.nameErrorMessage = null;
           this.notificationService.success(`Department ${updated.name} updated successfully.`, 'Updated');
           this.loadDepartments();
         },
         error: (err) => {
           this.isSubmittingForm = false;
-          this.notificationService.error(err.message || 'Failed to update department.');
+          const msg = err.message || 'Failed to update department.';
+          if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('name')) {
+            this.nameErrorMessage = msg;
+          }
+          this.notificationService.error(msg);
         }
       });
     } else {
@@ -141,39 +160,53 @@ export class DepartmentListComponent implements OnInit {
         next: (created) => {
           this.isSubmittingForm = false;
           this.isFormModalOpen = false;
+          this.nameErrorMessage = null;
           this.notificationService.success(`Department ${created.name} (${created.code}) created successfully.`, 'Created');
           this.loadDepartments();
         },
         error: (err) => {
           this.isSubmittingForm = false;
-          this.notificationService.error(err.message || 'Failed to create department.');
+          const msg = err.message || 'Failed to create department.';
+          if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('name')) {
+            this.nameErrorMessage = msg;
+          }
+          this.notificationService.error(msg);
         }
       });
     }
   }
 
   public confirmDelete(dept: Department): void {
-    if (!this.authService.isAdmin()) {
+    if (!this.canDelete) {
       this.notificationService.warning('Only Administrators can delete departments.', 'Permission Denied');
       return;
     }
     this.departmentToDelete = dept;
+    this.deleteErrorMessage = null;
+    this.isDeleting = false;
     this.isDeleteModalOpen = true;
   }
 
   public executeDelete(): void {
-    if (!this.departmentToDelete) return;
+    if (!this.canDelete || !this.departmentToDelete) return;
     const name = this.departmentToDelete.name;
 
+    this.isDeleting = true;
+    this.deleteErrorMessage = null;
     this.departmentService.deleteDepartment(this.departmentToDelete.id).subscribe({
       next: () => {
+        this.isDeleting = false;
         this.isDeleteModalOpen = false;
         this.departmentToDelete = null;
+        this.deleteErrorMessage = null;
         this.notificationService.success(`Department ${name} deleted successfully.`, 'Deleted');
         this.loadDepartments();
       },
       error: (err) => {
-        this.notificationService.error(err.message || 'Failed to delete department.');
+        this.isDeleting = false;
+        const msg = err.message || 'Failed to delete department.';
+        this.deleteErrorMessage = msg;
+        this.notificationService.error(msg, 'Cannot Delete');
       }
     });
   }

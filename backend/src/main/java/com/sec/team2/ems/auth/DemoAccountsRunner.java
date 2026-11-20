@@ -61,7 +61,7 @@ public class DemoAccountsRunner implements ApplicationRunner {
                         "Jenkins",
                         "Sarah Jenkins",
                         Role.HR,
-                        "HR",
+                        "Human Resources",
                         "HR Manager",
                         "9811234567",
                         LocalDate.of(2023, 8, 10),

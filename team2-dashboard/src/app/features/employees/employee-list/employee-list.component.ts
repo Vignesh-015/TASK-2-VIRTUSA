@@ -87,7 +87,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       lastName: ['', [Validators.required, Validators.minLength(1)]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, Validators.pattern(/^(\+91[ -]?)?[0-9]{10}$/)]],
-      department: ['Engineering', [Validators.required]],
+      department: [this.departments.length > 0 ? this.departments[0].name : '', [Validators.required]],
       designation: ['', [Validators.required]],
       joiningDate: [new Date().toISOString().slice(0, 10), [Validators.required]],
       status: ['ACTIVE' as EmployeeStatus, [Validators.required]],
@@ -103,6 +103,9 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   public loadDepartments(): void {
     this.departmentService.getDepartments().subscribe(depts => {
       this.departments = depts;
+      if (depts.length > 0 && !this.employeeForm.get('department')?.value) {
+        this.employeeForm.patchValue({ department: depts[0].name });
+      }
     });
   }
 
@@ -156,12 +159,13 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.selectedEmployee = null;
     this.emailErrorMessage = null;
+    const defaultDept = this.departments.length > 0 ? this.departments[0].name : '';
     this.employeeForm.reset({
       firstName: '',
       lastName: '',
       email: '',
       phone: '',
-      department: this.departments[0]?.name || 'Engineering',
+      department: defaultDept,
       designation: '',
       joiningDate: new Date().toISOString().slice(0, 10),
       status: 'ACTIVE',

@@ -115,6 +115,24 @@ Base path: `http://localhost:8080/api/profile`
 | `PUT` | `/profile/me` | Update permitted profile fields (names, phone, location, skills, bio, emergency contact) | `ProfileUpdateRequest` | `200 OK` (`400` validation, `401` unauthenticated) |
 | `POST` | `/profile/change-password` | Change authenticated user's password | `ChangePasswordRequest` | `200 OK` (`400` validation/mismatch, `401` unauthenticated) |
 
+## Department Module (`com.sec.team2.ems.department`)
+
+The Department module manages functional business units, organizational headcounts, department heads, and acts as the single source of truth for department configurations.
+
+Detailed architecture and design documentation is available at [docs/DEPARTMENT_MODULE.md](docs/DEPARTMENT_MODULE.md).
+
+### Department REST Endpoints
+
+Base path: `http://localhost:8080/api/departments`
+
+| Method | Endpoint | Description | Request Body | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/departments` | List all departments with computed live employee count | None | `200 OK` (`401` unauthenticated) |
+| `GET` | `/departments/{id}` | Retrieve department by ID | None | `200 OK` (`404` not found) |
+| `POST` | `/departments` | Create a new department (Admin/HR) | `DepartmentRequest` | `201 Created` (`400` validation, `409` duplicate) |
+| `PUT` | `/departments/{id}` | Update department and cascade rename to users (Admin/HR) | `DepartmentRequest` | `200 OK` (`400` validation, `409` duplicate) |
+| `DELETE` | `/departments/{id}` | Delete empty department (Admin only; blocked if staff assigned) | None | `204 No Content` (`409` if has employees) |
+
 ## Package Structure & Module Owners
 
 Base package: `com.sec.team2.ems`
@@ -126,6 +144,7 @@ Base package: `com.sec.team2.ems`
 | `com.sec.team2.ems.health` | `HealthController` (`GET /api/health`) |
 | `com.sec.team2.ems.auth` | Authentication & security — **Viknesh S R** |
 | `com.sec.team2.ems.user` | User management — **Vigneshwaran R** |
+| `com.sec.team2.ems.department` | Department management — **SEC Team 2** |
 | `com.sec.team2.ems.dashboard` | Dashboard — **Yuvashree R H** |
 | `com.sec.team2.ems.report` | Reports & analytics — **Vetriselvi M** |
 | `com.sec.team2.ems.profile` | Profile & role-based access — **Sivasakthi A** |

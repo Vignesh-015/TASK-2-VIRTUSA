@@ -2,7 +2,9 @@ package com.sec.team2.ems.user;
 
 import com.sec.team2.ems.common.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,4 +34,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.employeeCode FROM User u WHERE u.employeeCode IS NOT NULL")
     List<String> findAllEmployeeCodes();
+
+    long countByDepartmentIgnoreCase(String department);
+
+    @Modifying
+    @Query("UPDATE User u SET u.department = :newName WHERE LOWER(u.department) = LOWER(:oldName)")
+    int updateDepartmentName(@Param("oldName") String oldName, @Param("newName") String newName);
 }

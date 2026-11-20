@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { DepartmentService } from '../../../core/services/department.service';
 import { USER_DEPARTMENTS, User, UserNotice } from '../models/user.model';
 import { UserService } from '../services/user.service';
 import { canAddOrEditUsers, canDeleteUsers, canViewUsers } from '../users.permissions';
@@ -11,7 +12,7 @@ import { canAddOrEditUsers, canDeleteUsers, canViewUsers } from '../users.permis
   styleUrls: ['./user-list.component.scss']
 })
 export class UserListComponent implements OnInit, OnDestroy {
-  public readonly departments = USER_DEPARTMENTS;
+  public departments: string[] = [];
   public readonly pageSize = 8;
 
   public users: User[] = [];
@@ -35,6 +36,7 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
+    private departmentService: DepartmentService,
     private authService: AuthService,
     private router: Router
   ) {}
@@ -91,7 +93,19 @@ export class UserListComponent implements OnInit, OnDestroy {
     if (pendingNotice) {
       this.showNotice(pendingNotice.message, pendingNotice.type);
     }
+    this.loadDepartments();
     this.loadUsers();
+  }
+
+  public loadDepartments(): void {
+    this.departmentService.getDepartments().subscribe({
+      next: (depts) => {
+        this.departments = depts.map(d => d.name);
+      },
+      error: () => {
+        this.departments = [...USER_DEPARTMENTS];
+      }
+    });
   }
 
   ngOnDestroy(): void {

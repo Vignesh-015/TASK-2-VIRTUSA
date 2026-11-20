@@ -145,11 +145,12 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 | Module | Frontend Status | Backend Status | Key Files | Owner (from git log) |
 | :--- | :--- | :--- | :--- | :--- |
 | Auth | DONE (mock + HTTP client ready) | IMPLEMENTED (JWT, login, register, security filter, role rules) | `features/auth/login/*`, `core/services/auth.service.ts`, `backend/src/main/java/com/sec/team2/ems/auth/*`, `backend/src/main/java/com/sec/team2/ems/config/SecurityConfig.java` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
-| Dashboard | DONE (mock via `EmployeeService`) | MISSING | `features/dashboard/dashboard-home/*`, `core/services/dashboard.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
+| Dashboard | DONE (connected to DepartmentService & EmployeeService, live metrics & distribution) | MISSING | `features/dashboard/dashboard-home/*`, `core/services/dashboard.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Users | DONE (useMock=false, real REST API, access-only management) | IMPLEMENTED (unified with employee fields) | `team2-dashboard/src/app/features/users/*`, `backend/src/main/java/com/sec/team2/ems/user/*` | Vignesh-015 (`ef76182`, `554d4c7`) |
 | Reports | PLACEHOLDER (unrouted) | MISSING | `features/reports/reports/*`, `features/reports/reports.module.ts` | Vignesh-015 (`1bc2347`) |
 | Profile | DONE (connected to /api/profile REST API, Change Password tab, useMock=false) | IMPLEMENTED (GET/PUT /api/profile/me, POST /change-password) | `features/profile/*`, `backend/src/main/java/com/sec/team2/ems/profile/*` | YUVASHREE R H (`6d88b6f`); Vignesh-015 (`1bc2347`) |
-| HR page (Employees & Departments) | DONE (EmployeeService connected to /api/users, useMock=false) | UNIFIED (backend `users` table serves as employee source) | `features/employees/*`, `features/departments/*`, `core/services/{employee,department}.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
+| Employees | DONE (EmployeeService connected to /api/users, useMock=false) | UNIFIED (backend `users` table serves as employee source) | `features/employees/*`, `core/services/employee.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
+| Departments | DONE (connected to `/api/departments`, cached, useMock=false) | IMPLEMENTED (`/api/departments` CRUD, live employee count, cascade rename, seeder & migration) | `features/departments/*`, `backend/src/main/java/com/sec/team2/ems/department/*` | YUVASHREE R H (`6d88b6f`, `516c582`) |
 | Layout | DONE | N/A | `layout/app-layout/*`, `layout/public-layout/*` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Role-based access | DONE (guards + `users.permissions.ts`) | MISSING | `core/guards/*`, `pages/forbidden/*`, `features/users/users.permissions.ts` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`, `ef76182`) |
 
@@ -178,7 +179,12 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 | `GET` | `/api/profile/me` | — | `ProfileResponse` (self profile derived from JWT context) | `ProfileController.java` |
 | `PUT` | `/api/profile/me` | `ProfileUpdateRequest` | `ProfileResponse` (updates contact, bio, skills, emergency contact) | `ProfileController.java` |
 | `POST` | `/api/profile/change-password` | `ChangePasswordRequest` | `{ message }` (validates current hash & strength rules) | `ProfileController.java` |
-| Employees / Departments / Reports | **NOT FOUND** | **NOT FOUND** | **NOT FOUND** | Mock-only / placeholder |
+| `GET` | `/api/departments` | — | `DepartmentResponse[]` (`id`, `name`, `code`, `description`, `headName`, `headEmail`, `headAvatar`, `budget`, `location`, `color`, `employeeCount`) | `department.service.ts` / `DepartmentController.java` |
+| `GET` | `/api/departments/{id}` | — | `DepartmentResponse` | `department.service.ts` / `DepartmentController.java` |
+| `POST` | `/api/departments` | `DepartmentRequest` | `DepartmentResponse` | `department.service.ts` / `DepartmentController.java` |
+| `PUT` | `/api/departments/{id}` | `DepartmentRequest` | `DepartmentResponse` (cascades name change to `users.department`) | `department.service.ts` / `DepartmentController.java` |
+| `DELETE` | `/api/departments/{id}` | — | `void` (`409` if has employees, `204` if empty) | `department.service.ts` / `DepartmentController.java` |
+| Employees / Reports | **NOT FOUND** | **NOT FOUND** | **NOT FOUND** | Mock-only / placeholder |
 
 ---
 
@@ -224,4 +230,7 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - `2026-11-19` | Implemented Authentication & Security backend (JWT service, filter, /api/auth/login, /api/auth/register, demo accounts runner, and method security role rules)
 - `2026-11-19` | Implemented Profile backend (GET /api/profile/me, PUT /api/profile/me, POST /api/profile/change-password, emergency contact columns on User, password validation & BCrypt updates)
 - `2026-11-19` | Connected Profile frontend to Spring Boot /api/profile REST API (useMock=false), added Change Password tab with client-side validation, and removed hardcoded fallbacks
+- `2026-11-20` | Implemented Department backend in `com.sec.team2.ems.department` (Entity, Repository, Service, Controller, Seeder, MigrationRunner), user department validation on create/update/register, and cascade rename to users
+- `2026-11-20` | Connected Departments frontend to Spring Boot /api/departments REST API (useMock=false, caching, role-based controls, backend error messages), and connected Employees & Users filters/dropdowns to DepartmentService
+- `2026-11-20` | Dynamic Dashboard Department Metrics & Computed Subtitles: Connected DashboardHomeComponent to DepartmentService (source of truth, forceRefresh=true) & EmployeeService; listed every department including 0-staff units sorted by headcount desc then name asc; cycled palette; added fallback for unlisted departments; dynamic subtitles for workforce, active rate, added this month, and department allocation
 
