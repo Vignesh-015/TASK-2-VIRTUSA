@@ -29,13 +29,13 @@ public class UserController {
 
     private final UserService userService;
 
-    // Open to all roles for now because the dashboard and profile still read this list; tighten when they get their own endpoints
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    // Open to all roles for now because the dashboard and profile still read this list; tighten when they get their own endpoints
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));

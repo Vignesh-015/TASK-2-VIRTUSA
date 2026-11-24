@@ -63,7 +63,8 @@ The Authentication and Security module manages JWT authentication, token issuanc
 - **Protected Endpoints:** Enforces role-based permissions (`@PreAuthorize`) and returns 401/403 JSON in standard `ApiError` format.
 - **Demo Accounts:** Automatically provisions demo accounts on startup when `app.seed-demo-accounts=true`.
 
-Detailed architecture and design documentation is available at [docs/AUTH_MODULE.md](docs/AUTH_MODULE.md).
+Detailed architecture and design documentation is available at [docs/AUTH_MODULE.md](docs/AUTH_MODULE.md).  
+The comprehensive API authorization specification across all roles is documented in [docs/SECURITY_MATRIX.md](docs/SECURITY_MATRIX.md).
 
 ### Auth REST Endpoints
 
@@ -91,8 +92,8 @@ Base path: `http://localhost:8080/api/users`
 
 | Method | Endpoint | Description | Request Body | Response Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/users` | List all employee accounts ordered by ID | None | `200 OK` |
-| `GET` | `/users/{id}` | Get employee details by ID | None | `200 OK` (`404` if not found) |
+| `GET` | `/users` | List all employee accounts ordered by ID | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/users/{id}` | Get employee details by ID | None | `200 OK` (`404` if not found, `403` for `EMPLOYEE`, `401` unauthenticated) |
 | `POST` | `/users` | Create a new employee (role defaults to `EMPLOYEE`, generates `EMP-XXXX`) | `UserRequest` | `201 Created` (`400` validation, `409` duplicate) |
 | `PUT` | `/users/{id}` | Update existing employee details | `UserRequest` | `200 OK` (`404` if not found, `409` duplicate) |
 | `PATCH` | `/users/{id}/role` | Update user access role | `RoleUpdateRequest` | `200 OK` (`409` if last admin) |
