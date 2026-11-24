@@ -1,13 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DepartmentService } from '../../../core/services/department.service';
+import { DashboardService } from '../../../core/services/dashboard.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { User, UserRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
-import { Department } from '../../../core/models/department.model';
+import {
+  DashboardStatsResponse,
+  DepartmentHeadcountResponse,
+  RecentEmployeeResponse
+} from '../../../core/models/dashboard.model';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -66,6 +72,7 @@ export class DashboardHomeComponent implements OnInit {
     public authService: AuthService,
     private employeeService: EmployeeService,
     private departmentService: DepartmentService,
+    private dashboardService: DashboardService,
     private notificationService: NotificationService,
     private router: Router
   ) {}
@@ -93,11 +100,35 @@ export class DashboardHomeComponent implements OnInit {
 
     if (this.userRole === 'ADMIN' || this.userRole === 'HR') {
       forkJoin({
-        departments: this.departmentService.getDepartments(true),
-        employees: this.employeeService.getAllEmployees()
+        stats: this.dashboardService.getDashboardStats().pipe(
+          catchError(() => {
+            this.notificationService.error('Failed to load workforce summary metrics.');
+            return of(null);
+          })
+        ),
+        departments: this.dashboardService.getDepartmentHeadcounts().pipe(
+          catchError(() => {
+            this.notificationService.error('Failed to load department headcount breakdown.');
+            return of(null);
+          })
+        ),
+        recent: this.dashboardService.getRecentEmployees(5).pipe(
+          catchError(() => {
+            this.notificationService.error('Failed to load recent employee additions.');
+            return of(null);
+          })
+        )
       }).subscribe({
-        next: ({ departments, employees }) => {
-          this.computeDashboardMetrics(departments, employees);
+        next: ({ stats, departments, recent }) => {
+          if (stats) {
+            this.applyStats(stats);
+          }
+          if (departments) {
+            this.applyDepartments(departments);
+          }
+          if (recent) {
+            this.applyRecent(recent);
+          }
           this.isLoading = false;
         },
         error: () => {
@@ -122,151 +153,86 @@ export class DashboardHomeComponent implements OnInit {
     }
   }
 
-  private computeDashboardMetrics(departments: Department[], employees: Employee[]): void {
-    const total = employees.length;
-    const active = employees.filter(e => e.status === 'ACTIVE').length;
-    const onboarding = employees.filter(e => e.status === 'ONBOARDING').length;
-    const onLeave = employees.filter(e => e.status === 'ON_LEAVE').length;
-    const inactive = employees.filter(e => e.status === 'INACTIVE').length;
-    const totalDepts = departments.length;
+  private applyStats(stats: DashboardStatsResponse): void {
+    const total = stats.totalEmployees;
+    this.stats.totalEmployees = total;
+    this.stats.activeEmployees = stats.activeEmployees;
+    this.stats.newJoinersCount = stats.onboardingEmployees;
+    this.stats.totalDepartments = stats.totalDepartments;
 
-    // Monthly joiners for trend indicator
-    const now = new Date();
-    const curYear = now.getFullYear();
-    const curMonth = now.getMonth();
-    const addedThisMonth = employees.filter(e => {
-      if (!e.joiningDate) return false;
-      const d = new Date(e.joiningDate);
-      return !isNaN(d.getTime()) && d.getFullYear() === curYear && d.getMonth() === curMonth;
-    }).length;
-
-    // Subtitles computed dynamically
+    // Subtitles
     this.workforceSubtitle = `${total} employee ${total === 1 ? 'record' : 'records'}`;
-    const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : '0.0';
-    this.activeStaffSubtitle = `${activePct}% operational engagement`;
-    this.addedThisMonthText = `${addedThisMonth} added this month`;
-    this.departmentsSubtitle = `${totalDepts} functional business ${totalDepts === 1 ? 'unit' : 'units'}`;
-    this.distributionSubtitle = `Exact headcount allocation across ${totalDepts} business ${totalDepts === 1 ? 'unit' : 'units'} (${total} staff total)`;
+    this.activeStaffSubtitle = `${stats.activePercentage.toFixed(1)}% operational engagement`;
+    this.addedThisMonthText = `${stats.newJoinersThisMonth} added this month`;
+    this.departmentsSubtitle = `${stats.totalDepartments} functional business ${stats.totalDepartments === 1 ? 'unit' : 'units'}`;
 
-    // Count employees per department (case-insensitive mapping)
-    const empCountByDeptName = new Map<string, number>();
-    for (const emp of employees) {
-      const rawDept = (emp.department || '').trim();
-      if (rawDept) {
-        const key = rawDept.toLowerCase();
-        empCountByDeptName.set(key, (empCountByDeptName.get(key) || 0) + 1);
-      }
-    }
-
-    // Registered departments from DepartmentService (source of truth)
-    const matchedKeys = new Set<string>();
-    const recognizedBreakdown: { department: string; count: number; percentage: number; color: string }[] = [];
-
-    departments.forEach((dept, idx) => {
-      const key = (dept.name || '').trim().toLowerCase();
-      matchedKeys.add(key);
-
-      const count = empCountByDeptName.get(key) ?? (typeof dept.employeeCount === 'number' ? dept.employeeCount : 0);
-      const percentage = total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0;
-      const color = dept.color && dept.color.trim() ? dept.color : this.defaultPalette[idx % this.defaultPalette.length];
-
-      recognizedBreakdown.push({
-        department: dept.name,
-        count,
-        percentage,
-        color
-      });
-    });
-
-    // Sort registered departments: headcount descending, then name ascending
-    recognizedBreakdown.sort((a, b) => {
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
-      return a.department.localeCompare(b.department);
-    });
-
-    // Fallback: unlisted departments from employees (e.g., legacy or typo)
-    const unlistedMap = new Map<string, number>();
-    for (const emp of employees) {
-      const rawDept = (emp.department || '').trim();
-      const key = rawDept.toLowerCase();
-      if (!matchedKeys.has(key)) {
-        const displayName = rawDept || 'Unassigned';
-        unlistedMap.set(displayName, (unlistedMap.get(displayName) || 0) + 1);
-      }
-    }
-
-    const unlistedBreakdown: { department: string; count: number; percentage: number; color: string }[] = [];
-    let unlistedIdx = departments.length;
-    unlistedMap.forEach((count, deptName) => {
-      const percentage = total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0;
-      const color = this.defaultPalette[unlistedIdx % this.defaultPalette.length];
-      unlistedIdx++;
-      unlistedBreakdown.push({
-        department: deptName,
-        count,
-        percentage,
-        color
-      });
-    });
-
-    unlistedBreakdown.sort((a, b) => {
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
-      return a.department.localeCompare(b.department);
-    });
-
-    // Sum of counts in breakdown equals total workforce
-    const departmentBreakdown = [...recognizedBreakdown, ...unlistedBreakdown];
-
-    // Status breakdown
-    const statusBreakdown = [
+    // Workforce status overview breakdown
+    this.stats.statusBreakdown = [
       {
         status: 'ACTIVE',
         label: 'Active',
-        count: active,
-        percentage: total > 0 ? Number(((active / total) * 100).toFixed(1)) : 0,
+        count: stats.activeEmployees,
+        percentage: total > 0 ? Number(((stats.activeEmployees / total) * 100).toFixed(1)) : 0,
         color: '#059669'
       },
       {
         status: 'ONBOARDING',
         label: 'Onboarding',
-        count: onboarding,
-        percentage: total > 0 ? Number(((onboarding / total) * 100).toFixed(1)) : 0,
+        count: stats.onboardingEmployees,
+        percentage: total > 0 ? Number(((stats.onboardingEmployees / total) * 100).toFixed(1)) : 0,
         color: '#2563EB'
       },
       {
         status: 'ON_LEAVE',
         label: 'On Leave',
-        count: onLeave,
-        percentage: total > 0 ? Number(((onLeave / total) * 100).toFixed(1)) : 0,
+        count: stats.onLeaveEmployees,
+        percentage: total > 0 ? Number(((stats.onLeaveEmployees / total) * 100).toFixed(1)) : 0,
         color: '#D97706'
       },
       {
         status: 'INACTIVE',
         label: 'Inactive',
-        count: inactive,
-        percentage: total > 0 ? Number(((inactive / total) * 100).toFixed(1)) : 0,
+        count: stats.inactiveEmployees,
+        percentage: total > 0 ? Number(((stats.inactiveEmployees / total) * 100).toFixed(1)) : 0,
         color: '#DC2626'
       }
     ];
 
-    // Recent employee additions
-    const recentEmployees = [...employees]
-      .sort((a, b) => new Date(b.joiningDate).getTime() - new Date(a.joiningDate).getTime())
-      .slice(0, 5);
+    this.updateDistributionSubtitle();
+  }
 
-    this.stats = {
-      totalEmployees: total,
-      activeEmployees: active,
-      newJoinersCount: onboarding,
-      totalDepartments: totalDepts,
-      departmentBreakdown,
-      statusBreakdown,
-      recentEmployees
-    };
+  private applyDepartments(departments: DepartmentHeadcountResponse[]): void {
+    this.stats.departmentBreakdown = departments.map((d, idx) => ({
+      department: d.department,
+      count: d.headcount,
+      percentage: d.percentage,
+      color: this.defaultPalette[idx % this.defaultPalette.length]
+    }));
+
+    this.updateDistributionSubtitle();
+  }
+
+  private updateDistributionSubtitle(): void {
+    const totalDepts = this.stats.totalDepartments || this.stats.departmentBreakdown.length;
+    const totalStaff = this.stats.totalEmployees;
+    this.distributionSubtitle = `Exact headcount allocation across ${totalDepts} business ${totalDepts === 1 ? 'unit' : 'units'} (${totalStaff} staff total)`;
+  }
+
+  private applyRecent(recent: RecentEmployeeResponse[]): void {
+    this.stats.recentEmployees = recent.map(r => ({
+      id: String(r.id),
+      employeeId: r.employeeCode || `EMP-${r.id}`,
+      firstName: '',
+      lastName: '',
+      fullName: r.fullName,
+      email: '',
+      phone: '',
+      department: r.department,
+      designation: r.designation,
+      joiningDate: r.joinedOn,
+      status: r.status as any,
+      employmentType: 'FULL_TIME' as any
+    }));
   }
 
   public navigateToEmployees(dept?: string): void {

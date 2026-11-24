@@ -1,3 +1,31 @@
+export interface DashboardStatsResponse {
+  totalEmployees: number;
+  activeEmployees: number;
+  onboardingEmployees: number;
+  onLeaveEmployees: number;
+  inactiveEmployees: number;
+  newJoinersThisMonth: number;
+  totalDepartments: number;
+  activePercentage: number;
+}
+
+export interface DepartmentHeadcountResponse {
+  department: string;
+  headcount: number;
+  percentage: number;
+}
+
+export interface RecentEmployeeResponse {
+  id: number;
+  employeeCode: string;
+  fullName: string;
+  department: string;
+  designation: string;
+  joinedOn: string;
+  status: 'ACTIVE' | 'ONBOARDING' | 'ON_LEAVE' | 'INACTIVE' | string;
+}
+
+// Retained for backward compatibility with unused dashboard components and tests
 export interface DashboardStats {
   totalUsers: number;
   activeUsers: number;

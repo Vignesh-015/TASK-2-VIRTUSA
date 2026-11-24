@@ -11,6 +11,7 @@ describe('DashboardService', () => {
       providers: [DashboardService]
     });
     service = TestBed.inject(DashboardService);
+    (service as any).useMock = true;
   });
 
   it('should be created', () => {
