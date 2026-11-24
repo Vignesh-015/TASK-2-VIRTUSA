@@ -51,6 +51,7 @@ The table below specifies the access control rules for every REST endpoint expos
 | `GET` | `/api/reports/summary` | Executive KPI analytics summary | `ADMIN`, `HR` | 401 | 403 | 200 | 200 |
 | **Profile (Self-Service)** | | | | | | | |
 | `GET` | `/api/profile/me` | Fetch authenticated user's own profile | Authenticated | 401 | 200 | 200 | 200 |
+| `GET` | `/api/profile/colleagues` | Privacy-safe department colleagues for workspace | Authenticated | 401 | 200 | 200 | 200 |
 | `PUT` | `/api/profile/me` | Update authenticated user's own details | Authenticated | 401 | 200 | 200 | 200 |
 | `PUT` | `/api/profile/change-password` | Update authenticated user's own password | Authenticated | 401 | 200 | 200 | 200 |
 
@@ -99,15 +100,15 @@ To provide a consistent user experience, the Angular frontend mirrors the backen
 2. **Development Seed Passwords:**  
    The demo accounts seeded during development (`admin123`, `hr123`, `emp123`) are hardcoded for evaluation.
 3. **Static JWT Secret in Config:**  
-   The fallback JWT signing secret in `application.properties` is a default key intended for development convenience.
+   The fallback JWT signing secret in `application.properties` is a default key intended for development convenience. A startup warning is logged when this fallback key is in use.
 
 ---
 
 ## 6. Production Hardening Checklist
 
-When preparing this backend for production deployment, apply the following controls:
-- [ ] **Secure JWT Signing Secret:** Provide a minimum 256-bit cryptographically random secret via the `JWT_SECRET` environment variable or external secret manager (e.g. AWS Secrets Manager, HashiCorp Vault). Never commit secrets to version control.
-- [ ] **Disable Demo Account Seeders:** Set `app.seed-demo-accounts=false` in production properties to ensure no default credentials exist in production.
+When preparing this backend for production deployment, activate the dedicated `prod` profile (`application-prod.properties`):
+- [ ] **Enforce Production Profile:** Run with `-Dspring-boot.run.profiles=prod`. This sets `app.seed-demo-accounts=false`, disables SQL echo, and lowers token expiration to 60 minutes.
+- [ ] **Mandatory Secure JWT Secret:** The `prod` profile requires `JWT_SECRET` environment variable with no default; the application refuses to start if it is missing.
 - [ ] **Token Expiry & Refresh Strategy:** Reduce access token lifespan to 15–30 minutes and implement a secure refresh token mechanism stored in `HttpOnly`, `Secure`, `SameSite=Strict` cookies.
 - [ ] **Token Revocation Blacklist:** Introduce a distributed cache (e.g. Redis) to invalidate tokens on explicit logout or administrative revocation before expiration.
 - [ ] **Enforce TLS/HTTPS:** Terminate TLS at the reverse proxy (Nginx, Cloudflare) and enforce HTTPS to secure JWT bearer tokens in transit.

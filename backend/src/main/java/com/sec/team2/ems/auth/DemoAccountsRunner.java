@@ -36,6 +36,7 @@ public class DemoAccountsRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        log.warn("DEV MODE: demo accounts are seeded with weak passwords; use the prod profile for real deployments");
         log.info("Checking demo accounts (app.seed-demo-accounts=true)...");
 
         List<DemoAccountSpec> specs = List.of(
@@ -85,7 +86,12 @@ public class DemoAccountsRunner implements ApplicationRunner {
 
         int createdCount = 0;
         for (DemoAccountSpec spec : specs) {
-            if (!userRepository.existsByEmailIgnoreCase(spec.email())) {
+            java.util.Optional<User> existing = userRepository.findByEmailIgnoreCase(spec.email());
+            if (existing.isPresent()) {
+                User user = existing.get();
+                user.setPassword(passwordEncoder.encode(spec.rawPassword()));
+                userRepository.save(user);
+            } else {
                 String code = userService.generateNextEmployeeCode();
                 User user = User.builder()
                         .employeeCode(code)

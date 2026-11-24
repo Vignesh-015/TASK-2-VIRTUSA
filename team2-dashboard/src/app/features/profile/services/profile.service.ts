@@ -9,7 +9,8 @@ import {
   UserProfile,
   ProfileUpdateRequest,
   ChangePasswordRequest,
-  MessageResponse
+  MessageResponse,
+  ColleagueResponse
 } from '../models/profile.model';
 
 /**
@@ -36,6 +37,33 @@ export class ProfileService {
     private http: HttpClient,
     private authService: AuthService
   ) {}
+
+  /**
+   * Retrieves up to 8 active colleagues from the logged-in user's department.
+   */
+  public getColleagues(): Observable<ColleagueResponse[]> {
+    if (this.useMock) {
+      return this.mockGetColleagues();
+    }
+
+    return this.http.get<ColleagueResponse[]>(`${environment.apiUrl}/profile/colleagues`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        const msg = error.error?.message || (error.status === 0
+          ? 'Cannot reach the server. Please check that the backend is running.'
+          : 'Failed to load department colleagues.');
+        return throwError(() => new Error(msg));
+      })
+    );
+  }
+
+  private mockGetColleagues(): Observable<ColleagueResponse[]> {
+    const mockList: ColleagueResponse[] = [
+      { id: 101, fullName: 'Alexander Hayes', designation: 'VP of Engineering', workLocation: 'Bengaluru', status: 'ACTIVE' },
+      { id: 102, fullName: 'Marcus Chen', designation: 'Staff Engineer', workLocation: 'Bengaluru', status: 'ACTIVE' },
+      { id: 103, fullName: 'Priya Nair', designation: 'Senior Full Stack Developer', workLocation: 'Bengaluru', status: 'ACTIVE' }
+    ];
+    return of(mockList).pipe(delay(100));
+  }
 
   /**
    * Fetches the profile of the currently logged-in user.

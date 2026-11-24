@@ -1,6 +1,12 @@
+/**
+ * AuthUser represents the authenticated session user stored in memory and local storage
+ * following login or registration. It carries session-level credentials, profile summary,
+ * and current role clearances.
+ */
+
 export type UserRole = 'ADMIN' | 'HR' | 'EMPLOYEE';
 
-export interface User {
+export interface AuthUser {
   id: string;
   name: string;
   email: string;

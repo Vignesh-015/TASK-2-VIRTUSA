@@ -32,6 +32,12 @@ public class ProfileController {
         return ResponseEntity.ok(profile);
     }
 
+    @GetMapping("/colleagues")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<java.util.List<ColleagueResponse>> getColleagues() {
+        return ResponseEntity.ok(profileService.getCurrentUserColleagues());
+    }
+
     @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProfileResponse> updateCurrentProfile(@Valid @RequestBody ProfileUpdateRequest request) {

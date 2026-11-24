@@ -72,3 +72,13 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface ColleagueResponse {
+  id: number;
+  fullName: string;
+  designation: string;
+  workLocation?: string;
+  avatar?: string;
+  status?: string;
+}
+
+

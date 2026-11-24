@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TimeAgoPipe } from './pipes/time-ago.pipe';
 import { AvatarComponent } from './components/avatar/avatar.component';
 import { StatusBadgeComponent } from './components/status-badge/status-badge.component';
 import { StatCardComponent } from './components/stat-card/stat-card.component';
@@ -18,8 +17,7 @@ const COMPONENTS = [
   PaginationComponent,
   ModalComponent,
   ToastContainerComponent,
-  ConfirmDialogComponent,
-  TimeAgoPipe
+  ConfirmDialogComponent
 ];
 
 @NgModule({

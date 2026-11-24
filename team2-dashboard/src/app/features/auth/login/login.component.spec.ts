@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { User } from '../../../core/models/user.model';
+import { AuthUser } from '../../../core/models/user.model';
 
 describe('LoginComponent Real Authentication Integration', () => {
   let component: LoginComponent;
@@ -15,7 +15,7 @@ describe('LoginComponent Real Authentication Integration', () => {
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
   let router: Router;
 
-  const mockUser: User = {
+  const mockUser: AuthUser = {
     id: '1',
     name: 'Alexander Hayes',
     email: 'admin@employeehub.com',
@@ -136,8 +136,7 @@ describe('LoginComponent Real Authentication Integration', () => {
     component.registerForm.patchValue({
       name: 'New Employee',
       email: 'newemp@employeehub.com',
-      password: 'Password123',
-      department: 'Engineering'
+      password: 'Password123'
     });
 
     component.onSignUpSubmit();
@@ -147,8 +146,7 @@ describe('LoginComponent Real Authentication Integration', () => {
       name: 'New Employee',
       email: 'newemp@employeehub.com',
       password: 'Password123',
-      role: 'EMPLOYEE',
-      department: 'Engineering'
+      role: 'EMPLOYEE'
     });
 
     // Should switch to signin tab with success message
@@ -167,8 +165,7 @@ describe('LoginComponent Real Authentication Integration', () => {
     component.registerForm.patchValue({
       name: 'Duplicate Employee',
       email: 'admin@ems.com',
-      password: 'Password123',
-      department: 'Engineering'
+      password: 'Password123'
     });
 
     component.onSignUpSubmit();

@@ -51,6 +51,24 @@ Real database credentials must never be committed to Git.
   ```
 H2 Console (when running with `h2` profile): `http://localhost:8080/api/h2-console` (JDBC URL: `jdbc:h2:mem:ems_db`, username: `sa`, password: empty).
 
+### Production Profile (`prod`)
+To run with production configuration (`application-prod.properties`), demo accounts are disabled (`app.seed-demo-accounts=false`), SQL logging is disabled, token validity is reduced to 60 minutes, and a cryptographically secure `JWT_SECRET` environment variable is required (the application refuses to start without it):
+
+- **Required Environment Variables:**
+  - `JWT_SECRET`: Minimum 256-bit HMAC secret (at least 32 characters).
+  - `DB_USERNAME`: Production MySQL username.
+  - `DB_PASSWORD`: Production MySQL password.
+- Windows (PowerShell):
+  ```powershell
+  $env:JWT_SECRET="your-production-secret-at-least-32-chars-long"
+  mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
+  ```
+- Linux / macOS:
+  ```bash
+  export JWT_SECRET="your-production-secret-at-least-32-chars-long"
+  ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+  ```
+
 ### Building the JAR
 - Windows: `mvnw.cmd -q -DskipTests package`
 - Linux / macOS: `./mvnw -q -DskipTests package`

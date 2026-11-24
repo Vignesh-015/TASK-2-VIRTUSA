@@ -177,6 +177,7 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 | `GET` | `/api/dashboard/departments` | — | `DepartmentHeadcountResponse[]` (`department`, `headcount`, `percentage`) | `DashboardController.java` |
 | `GET` | `/api/dashboard/recent` | `?limit=5` | `RecentEmployeeResponse[]` (`id`, `employeeCode`, `fullName`, `department`, `designation`, `joinedOn`, `status`) | `DashboardController.java` |
 | `GET` | `/api/profile/me` | — | `ProfileResponse` (self profile derived from JWT context) | `ProfileController.java` |
+| `GET` | `/api/profile/colleagues` | — | `ColleagueResponse[]` (up to 8 active department colleagues: id, name, designation, location) | `ProfileController.java` |
 | `PUT` | `/api/profile/me` | `ProfileUpdateRequest` | `ProfileResponse` (updates contact, bio, skills, emergency contact) | `ProfileController.java` |
 | `POST` | `/api/profile/change-password` | `ChangePasswordRequest` | `{ message }` (validates current hash & strength rules) | `ProfileController.java` |
 | `GET` | `/api/departments` | — | `DepartmentResponse[]` (`id`, `name`, `code`, `description`, `headName`, `headEmail`, `headAvatar`, `budget`, `location`, `color`, `employeeCount`) | `department.service.ts` / `DepartmentController.java` |
@@ -204,8 +205,8 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 ## 10. Known Issues and Mismatches
 
 - **Backend Status:** The `backend/` directory is created with Spring Boot 3.5.16 skeleton and full `User` module implementation. Other member modules (`auth`, `dashboard`, `report`, `profile`) remain to be implemented.
-- **Conflicting `User` Models & Departments:** `core/models/user.model.ts` (`name`, `joinDate`, 4 statuses) vs `features/users/models/user.model.ts` (`fullName`, `joinedOn`, 2 statuses); `DepartmentService` (6 corporate names) vs `USER_DEPARTMENTS` (6 short names).
-- **Dashboard Unused Code:** `DashboardHomeComponent` connects directly to `DashboardService` calling the Spring Boot backend `/api/dashboard/*` endpoints for Admin/HR metrics without downloading the full user directory on page load. `SummaryStripComponent`, `DepartmentListComponent`, and `ActivityTimelineComponent` inside `features/dashboard/components/` remain declared in `DashboardModule` for backward compatibility but are not rendered in `dashboard-home.component.html`.
+- **Model Disambiguation:** `core/models/user.model.ts` defines `AuthUser` (session user); `features/users/models/user.model.ts` defines `User` (directory record). Legacy `USER_DEPARTMENTS` removed.
+- **Dashboard Cleanup & Teammates Endpoint:** Dead dashboard components (`SummaryStripComponent`, `DepartmentListComponent`, `ActivityTimelineComponent`) and unused `TimeAgoPipe` removed. Employee workspace teammates panel now consumes live department colleagues via `GET /api/profile/colleagues`.
 - **Style Inconsistencies:** `styles.scss` uses `--color-primary-blue: #2563EB` and imports Google Fonts `DM Sans`/`Inter`, whereas `styles/_variables.scss` defines older tokens (`$color-bg: #F6F4EF`, `$color-accent: #2457A6`). `reports.component.scss` references undefined variables `--text-sm` and `--color-text`. `styles.scss` uses `--radius-full` (`9999px`) on `.badge` and `app-layout` profile button.
 - **Routing / Guard Gaps:** `/users` route is now protected by `roleMatchGuard` (`['ADMIN', 'HR']`), and the Users sidebar link is visible only to `ADMIN` and `HR`. `NotFoundComponent.goHome()` links to `['/auth/login']` (which redirects to `/login`).
 - **Mock Flag Split:** `AuthService` and `DashboardService` use `environment.useMockApi`, while `UserService` uses its own `private readonly useMock = true`, and `EmployeeService`/`DepartmentService` have no HTTP mode.
@@ -243,4 +244,5 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - `2026-11-24` | Implemented Reports & Analytics backend in `com.sec.team2.ems.report` (GET `/api/reports/departments`, `/status-distribution`, `/monthly-joins`, `/summary`) with joinedOn date filtering, JPQL queries in UserRepository, role protection (ADMIN/HR), and full module docs
 - `2026-11-24` | Connected Reports frontend to Spring Boot /api/reports REST API (/departments, /status-distribution, /monthly-joins, /summary) with mock fallback, eliminating full employee table download on page load; removed redundant data source toggle; on-demand CSV export
 - `2026-11-24` | Restricted GET /api/users and GET /api/users/{id} to ADMIN and HR via @PreAuthorize; protected /users route with roleMatchGuard; guarded EmployeeService user reads for EMPLOYEE role; aligned sidebar navigation; added SECURITY_MATRIX.md documentation
+- `2026-11-24` | Cleanup task: removed Department from sign-up; renamed core User to AuthUser; deleted dead dashboard components and time-ago pipe; implemented GET /api/profile/colleagues and connected employee workspace; added application-prod.properties and startup dev warnings
 

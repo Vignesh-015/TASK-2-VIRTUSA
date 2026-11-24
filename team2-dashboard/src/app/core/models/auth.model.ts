@@ -1,4 +1,4 @@
-import { User, UserRole } from './user.model';
+import { AuthUser, UserRole } from './user.model';
 
 export interface LoginRequest {
   email: string;
@@ -16,5 +16,5 @@ export interface RegisterRequest {
 
 export interface LoginResponse {
   token: string;
-  user: User;
+  user: AuthUser;
 }

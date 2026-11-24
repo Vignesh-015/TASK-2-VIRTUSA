@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepartmentService } from '../../../core/services/department.service';
-import { USER_DEPARTMENTS, User, UserNotice } from '../models/user.model';
+import { User, UserNotice } from '../models/user.model';
 import { UserService } from '../services/user.service';
 import { canAddOrEditUsers, canDeleteUsers, canViewUsers } from '../users.permissions';
 
@@ -95,7 +95,7 @@ export class UserListComponent implements OnInit, OnDestroy {
         this.departments = depts.map(d => d.name);
       },
       error: () => {
-        this.departments = [...USER_DEPARTMENTS];
+        this.departments = [];
       }
     });
   }

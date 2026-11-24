@@ -25,15 +25,6 @@ export class LoginComponent implements OnInit {
   public showPassword: boolean = false;
   public showRegPassword: boolean = false;
 
-  public departments = [
-    'Engineering',
-    'Product & Design',
-    'Marketing',
-    'Human Resources',
-    'Finance & Operations',
-    'Sales & Partnerships'
-  ];
-
   private returnUrl: string | null = null;
 
   constructor(
@@ -57,8 +48,7 @@ export class LoginComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      role: ['EMPLOYEE' as UserRole, [Validators.required]],
-      department: ['Engineering', [Validators.required]]
+      role: ['EMPLOYEE' as UserRole, [Validators.required]]
     });
 
     this.route.queryParams.subscribe(params => {
@@ -138,9 +128,9 @@ export class LoginComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const { name, email, password, department } = this.registerForm.value;
+    const { name, email, password } = this.registerForm.value;
 
-    this.authService.register({ name, email, password, role: 'EMPLOYEE' as UserRole, department }).subscribe({
+    this.authService.register({ name, email, password, role: 'EMPLOYEE' as UserRole }).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.activeTab = 'signin';

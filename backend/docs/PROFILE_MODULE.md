@@ -143,6 +143,30 @@ Changes the user's password after validating business constraints.
 
 ---
 
+### 3.4 GET `/api/profile/colleagues`
+Retrieves up to 8 active colleagues in the logged-in user's department for employee workspace display, excluding the user themselves. Output is strictly restricted for privacy: only `id`, `fullName`, `designation`, and `workLocation` are returned.
+
+- **Headers:** `Authorization: Bearer <token>`
+- **Response: 200 OK**
+```json
+[
+  {
+    "id": 1,
+    "fullName": "Alexander Hayes",
+    "designation": "VP of Engineering",
+    "workLocation": "Bengaluru"
+  },
+  {
+    "id": 6,
+    "fullName": "Priya Nair",
+    "designation": "Senior Full Stack Developer",
+    "workLocation": "Bengaluru"
+  }
+]
+```
+
+---
+
 ## 4. Error Responses
 
 ### 4.1 Missing or Expired Token (401 Unauthorized)

@@ -87,4 +87,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.department = :newName WHERE LOWER(u.department) = LOWER(:oldName)")
     int updateDepartmentName(@Param("oldName") String oldName, @Param("newName") String newName);
+
+    List<User> findTop8ByDepartmentIgnoreCaseAndStatusAndIdNotOrderByFullNameAsc(
+            String department,
+            UserStatus status,
+            Long id
+    );
 }

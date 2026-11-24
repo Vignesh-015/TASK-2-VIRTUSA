@@ -27,6 +27,13 @@ public class JwtService {
     @Value("${app.jwt.expiration-minutes:120}")
     private long expirationMinutes;
 
+    @jakarta.annotation.PostConstruct
+    public void validateConfiguration() {
+        if ("ems-dev-only-secret-change-me-0123456789-abcdefghij".equals(jwtSecret)) {
+            log.warn("DEV MODE: development JWT secret default is in use; configure JWT_SECRET for production deployments");
+        }
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);

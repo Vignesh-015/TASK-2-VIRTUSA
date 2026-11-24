@@ -6,9 +6,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DepartmentService } from '../../../core/services/department.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { ProfileService } from '../../profile/services/profile.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { User, UserRole } from '../../../core/models/user.model';
+import { AuthUser, UserRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
+import { ColleagueResponse } from '../../profile/models/profile.model';
 import {
   DashboardStatsResponse,
   DepartmentHeadcountResponse,
@@ -21,8 +23,8 @@ import {
   styleUrls: ['./dashboard-home.component.scss']
 })
 export class DashboardHomeComponent implements OnInit {
-  public currentUser$!: Observable<User | null>;
-  public currentUser: User | null = null;
+  public currentUser$!: Observable<AuthUser | null>;
+  public currentUser: AuthUser | null = null;
   public userRole: UserRole = 'EMPLOYEE';
   public isLoading: boolean = true;
   public todayString: string = '';
@@ -60,7 +62,7 @@ export class DashboardHomeComponent implements OnInit {
   };
 
   // Employee workspace metrics
-  public employeeTeammates: Employee[] = [];
+  public employeeTeammates: (Employee | ColleagueResponse)[] = [];
   public employeeLeaveBalance = {
     annualLeave: 14,
     sickLeave: 5,
@@ -73,6 +75,7 @@ export class DashboardHomeComponent implements OnInit {
     private employeeService: EmployeeService,
     private departmentService: DepartmentService,
     private dashboardService: DashboardService,
+    private profileService: ProfileService,
     private notificationService: NotificationService,
     private router: Router
   ) {}
@@ -137,16 +140,14 @@ export class DashboardHomeComponent implements OnInit {
         }
       });
     } else {
-      // Employee Workspace: load teammates in same department
-      const userDept = this.currentUser?.department || 'Engineering';
-      this.employeeService.getAllEmployees().subscribe({
-        next: (all) => {
-          this.employeeTeammates = all
-            .filter(e => e.department.toLowerCase() === userDept.toLowerCase() && e.email !== this.currentUser?.email)
-            .slice(0, 5);
+      // Employee Workspace: load colleagues via ProfileService
+      this.profileService.getColleagues().subscribe({
+        next: (colleagues) => {
+          this.employeeTeammates = colleagues;
           this.isLoading = false;
         },
         error: () => {
+          this.employeeTeammates = [];
           this.isLoading = false;
         }
       });

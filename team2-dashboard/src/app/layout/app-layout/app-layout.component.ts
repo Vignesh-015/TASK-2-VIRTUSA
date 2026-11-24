@@ -4,7 +4,7 @@ import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { User } from '../../core/models/user.model';
+import { AuthUser } from '../../core/models/user.model';
 import { AppNotification } from '../../core/models/notification.model';
 
 interface BreadcrumbItem {
@@ -23,7 +23,7 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
   public notificationsOpen: boolean = false;
   public profileMenuOpen: boolean = false;
 
-  public currentUser$!: Observable<User | null>;
+  public currentUser$!: Observable<AuthUser | null>;
   public notifications$!: Observable<AppNotification[]>;
 
   public pageTitle: string = 'Dashboard';

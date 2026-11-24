@@ -38,6 +38,27 @@ public class ProfileService {
     }
 
     /**
+     * Retrieves up to 8 active colleagues from the logged-in user's department,
+     * excluding the logged-in user, ordered alphabetically by full name.
+     * Restricts output strictly to id, fullName, designation, and workLocation.
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<ColleagueResponse> getCurrentUserColleagues() {
+        User currentUser = getCurrentUser();
+        if (currentUser.getDepartment() == null || currentUser.getDepartment().isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        java.util.List<User> colleagues = userRepository.findTop8ByDepartmentIgnoreCaseAndStatusAndIdNotOrderByFullNameAsc(
+                currentUser.getDepartment().trim(),
+                com.sec.team2.ems.user.UserStatus.ACTIVE,
+                currentUser.getId()
+        );
+        return colleagues.stream()
+                .map(ColleagueResponse::fromEntity)
+                .toList();
+    }
+
+    /**
      * Updates permitted profile fields for the logged-in user.
      * System fields (email, role, department, employee code) are completely unaffected.
      */

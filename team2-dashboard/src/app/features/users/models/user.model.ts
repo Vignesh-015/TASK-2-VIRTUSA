@@ -1,18 +1,15 @@
+/**
+ * User describes a personnel / employee directory record returned by the /api/users
+ * REST endpoints, managing profile details, employment statuses, assignments,
+ * and organization-wide account metadata.
+ */
+
 import { UserRole } from '../../../core/models/user.model';
 
 export { UserRole };
 
 export type UserStatus = 'ACTIVE' | 'ONBOARDING' | 'ON_LEAVE' | 'INACTIVE';
 export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN';
-
-export const USER_DEPARTMENTS = [
-  'Engineering',
-  'HR',
-  'Finance',
-  'Sales',
-  'Operations',
-  'Support'
-] as const;
 
 export interface User {
   id: string;

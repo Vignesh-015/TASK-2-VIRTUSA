@@ -5,7 +5,7 @@ import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { AuthInterceptor } from '../interceptors/auth.interceptor';
 import { environment } from '../../../environments/environment';
-import { User } from '../models/user.model';
+import { AuthUser } from '../models/user.model';
 
 describe('AuthService and AuthInterceptor Real Backend Integration', () => {
   let service: AuthService;
@@ -13,7 +13,7 @@ describe('AuthService and AuthInterceptor Real Backend Integration', () => {
   let httpClient: HttpClient;
   let routerSpy: jasmine.SpyObj<Router>;
 
-  const mockUser: User = {
+  const mockUser: AuthUser = {
     id: '1',
     name: 'System Admin',
     email: 'admin@ems.com',

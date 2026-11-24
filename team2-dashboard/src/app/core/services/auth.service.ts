@@ -4,12 +4,12 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { delay, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { User, UserRole } from '../models/user.model';
+import { AuthUser, UserRole } from '../models/user.model';
 import { LoginRequest, LoginResponse, RegisterRequest } from '../models/auth.model';
 import { decodeToken, isTokenExpired } from '../utils/jwt.util';
 
 interface MockAccount {
-  user: User;
+  user: AuthUser;
   password: string;
 }
 
@@ -81,8 +81,8 @@ export class AuthService {
     }
   };
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
+  public currentUser$: Observable<AuthUser | null> = this.currentUserSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -91,7 +91,7 @@ export class AuthService {
     this.restoreSession();
   }
 
-  public get currentUser(): User | null {
+  public get currentUser(): AuthUser | null {
     return this.currentUserSubject.value;
   }
 
@@ -140,7 +140,7 @@ export class AuthService {
 
     if (token && !isTokenExpired(token) && storedUser) {
       try {
-        const user: User = JSON.parse(storedUser);
+        const user: AuthUser = JSON.parse(storedUser);
         this.currentUserSubject.next(user);
         this.scheduleAutoLogout(token);
       } catch {
@@ -182,12 +182,12 @@ export class AuthService {
     );
   }
 
-  public register(request: RegisterRequest): Observable<{ message: string; user: User }> {
+  public register(request: RegisterRequest): Observable<{ message: string; user: AuthUser }> {
     if (environment.useMockApi) {
       return this.mockRegister(request);
     }
 
-    return this.http.post<{ message: string; user: User }>(`${environment.apiUrl}/auth/register`, request).pipe(
+    return this.http.post<{ message: string; user: AuthUser }>(`${environment.apiUrl}/auth/register`, request).pipe(
       catchError((error: HttpErrorResponse) => {
         let message = error.error?.message;
         if (error.status === 0) {
@@ -214,9 +214,9 @@ export class AuthService {
     return of({ token, user: account.user }).pipe(delay(200));
   }
 
-  public updateProfile(updates: Partial<User>): void {
+  public updateProfile(updates: Partial<AuthUser>): void {
     if (!this.currentUser) return;
-    const updated: User = { ...this.currentUser, ...updates };
+    const updated: AuthUser = { ...this.currentUser, ...updates };
     this.currentUserSubject.next(updated);
     localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
   }
@@ -229,7 +229,7 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  private saveSession(token: string, user: User): void {
+  private saveSession(token: string, user: AuthUser): void {
     localStorage.setItem(this.TOKEN_KEY, token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
@@ -285,7 +285,7 @@ export class AuthService {
     return throwError(() => new Error('Invalid email or password. Use one of the Demo Accounts or click Create Account to sign up.'));
   }
 
-  private mockRegister(request: RegisterRequest): Observable<{ message: string; user: User }> {
+  private mockRegister(request: RegisterRequest): Observable<{ message: string; user: AuthUser }> {
     const email = request.email.trim().toLowerCase();
     const registeredUsers = this.getRegisteredUsers();
 
@@ -298,7 +298,7 @@ export class AuthService {
     }
 
     const count = registeredUsers.length + 1020;
-    const newUser: User = {
+    const newUser: AuthUser = {
       id: 'usr-' + Math.random().toString(36).substring(2, 9),
       employeeId: `EMP-${count}`,
       name: request.name.trim(),
@@ -330,7 +330,7 @@ export class AuthService {
     return [];
   }
 
-  private generateMockToken(user: User): string {
+  private generateMockToken(user: AuthUser): string {
     const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
     const nowSec = Math.floor(Date.now() / 1000);
     const expSec = nowSec + AuthService.MOCK_TOKEN_MINUTES * 60;

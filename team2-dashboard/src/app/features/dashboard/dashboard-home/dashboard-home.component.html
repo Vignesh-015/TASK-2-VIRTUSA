@@ -410,12 +410,12 @@
         <div class="card-body">
           <div class="teammates-list">
             <div *ngFor="let mate of employeeTeammates" class="teammate-row">
-              <app-avatar [src]="mate.avatar" [name]="mate.fullName" size="sm"></app-avatar>
+              <app-avatar [src]="$any(mate).avatar" [name]="mate.fullName" size="sm"></app-avatar>
               <div class="teammate-info">
                 <span class="teammate-name">{{ mate.fullName }}</span>
                 <span class="teammate-role">{{ mate.designation }}</span>
               </div>
-              <app-status-badge [status]="mate.status"></app-status-badge>
+              <app-status-badge [status]="$any(mate).status || 'ACTIVE'"></app-status-badge>
             </div>
           </div>
         </div>

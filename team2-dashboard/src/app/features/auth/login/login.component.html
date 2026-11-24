@@ -240,16 +240,6 @@
           </p>
         </div>
 
-        <!-- Department Selection -->
-        <div class="form-group">
-          <label for="reg-dept" class="form-label">
-            Department <span class="required">*</span>
-          </label>
-          <select id="reg-dept" class="form-select" formControlName="department">
-            <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
-          </select>
-        </div>
-
         <!-- Submit Registration -->
         <button type="submit" class="btn btn-primary btn-submit" [disabled]="isLoading">
           <span *ngIf="!isLoading">Create Employee Account</span>
