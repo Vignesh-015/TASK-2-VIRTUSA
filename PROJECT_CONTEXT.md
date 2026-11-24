@@ -147,7 +147,7 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 | Auth | DONE (mock + HTTP client ready) | IMPLEMENTED (JWT, login, register, security filter, role rules) | `features/auth/login/*`, `core/services/auth.service.ts`, `backend/src/main/java/com/sec/team2/ems/auth/*`, `backend/src/main/java/com/sec/team2/ems/config/SecurityConfig.java` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Dashboard | DONE (connected to /api/dashboard REST API: /stats, /departments, /recent for Admin/HR; employee workspace preserved; useMock=false) | IMPLEMENTED (GET /api/dashboard/stats, /departments, /recent) | `features/dashboard/dashboard-home/*`, `core/services/dashboard.service.ts`, `backend/src/main/java/com/sec/team2/ems/dashboard/*` | YUVASHREE R H (`6d88b6f`, `516c582`); Vignesh-015 (`1bc2347`) |
 | Users | DONE (useMock=false, real REST API, access-only management) | IMPLEMENTED (unified with employee fields) | `team2-dashboard/src/app/features/users/*`, `backend/src/main/java/com/sec/team2/ems/user/*` | Vignesh-015 (`ef76182`, `554d4c7`) |
-| Reports | PLACEHOLDER (unrouted) | MISSING | `features/reports/reports/*`, `features/reports/reports.module.ts` | Vignesh-015 (`1bc2347`) |
+| Reports | DONE (connected to /api/reports REST API: /departments, /status-distribution, /monthly-joins, /summary; useMock=false) | IMPLEMENTED (GET /api/reports/departments, /status-distribution, /monthly-joins, /summary, @PreAuthorize ADMIN/HR) | `features/reports/reports/*`, `core/services/report.service.ts`, `backend/src/main/java/com/sec/team2/ems/report/*` | Vetriselvi M; Vignesh-015 (`1bc2347`) |
 | Profile | DONE (connected to /api/profile REST API, Change Password tab, useMock=false) | IMPLEMENTED (GET/PUT /api/profile/me, POST /change-password) | `features/profile/*`, `backend/src/main/java/com/sec/team2/ems/profile/*` | YUVASHREE R H (`6d88b6f`); Vignesh-015 (`1bc2347`) |
 | Employees | DONE (EmployeeService connected to /api/users, useMock=false) | UNIFIED (backend `users` table serves as employee source) | `features/employees/*`, `core/services/employee.service.ts` | YUVASHREE R H (`6d88b6f`, `516c582`) |
 | Departments | DONE (connected to `/api/departments`, cached, useMock=false) | IMPLEMENTED (`/api/departments` CRUD, live employee count, cascade rename, seeder & migration) | `features/departments/*`, `backend/src/main/java/com/sec/team2/ems/department/*` | YUVASHREE R H (`6d88b6f`, `516c582`) |
@@ -184,7 +184,11 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 | `POST` | `/api/departments` | `DepartmentRequest` | `DepartmentResponse` | `department.service.ts` / `DepartmentController.java` |
 | `PUT` | `/api/departments/{id}` | `DepartmentRequest` | `DepartmentResponse` (cascades name change to `users.department`) | `department.service.ts` / `DepartmentController.java` |
 | `DELETE` | `/api/departments/{id}` | — | `void` (`409` if has employees, `204` if empty) | `department.service.ts` / `DepartmentController.java` |
-| Employees / Reports | **NOT FOUND** | **NOT FOUND** | **NOT FOUND** | Mock-only / placeholder |
+| `GET` | `/api/reports/departments` | `?startDate&endDate` | `DepartmentReportItem[]` (`department`, `headcount`, `percentage`) | `ReportController.java` |
+| `GET` | `/api/reports/status-distribution` | `?startDate&endDate` | `StatusReportItem[]` (`status`, `count`, `percentage` for all 4 statuses) | `ReportController.java` |
+| `GET` | `/api/reports/monthly-joins` | `?startDate&endDate` | `MonthlyJoinItem[]` (`month` yyyy-MM, `count`; max 60 months) | `ReportController.java` |
+| `GET` | `/api/reports/summary` | `?startDate&endDate` | `ReportSummaryResponse` (`totalEmployees`, `activeEmployees`, `inactiveEmployees`, `joinedInRange`) | `ReportController.java` |
+| Employees | **NOT FOUND** | **NOT FOUND** | **NOT FOUND** | Mock-only / placeholder |
 
 ---
 
@@ -236,4 +240,6 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - `2026-11-20` | Removed Quick Demo Access cards from login page; added subtle account help hint below Sign In; synchronized logged-in user profile in AuthService when updated via EmployeeService or UserService
 - `2026-11-23` | Implemented Dashboard backend in `com.sec.team2.ems.dashboard` (GET `/api/dashboard/stats`, `/api/dashboard/departments`, `/api/dashboard/recent`) with role-based access (`@PreAuthorize` ADMIN/HR), UserRepository count/group queries, and full module docs
 - `2026-11-23` | Connected Admin/HR Dashboard frontend to Spring Boot /api/dashboard REST API (/stats, /departments, /recent) with mock fallback, eliminating full employee table download on dashboard load; preserved Employee workspace view
+- `2026-11-24` | Implemented Reports & Analytics backend in `com.sec.team2.ems.report` (GET `/api/reports/departments`, `/status-distribution`, `/monthly-joins`, `/summary`) with joinedOn date filtering, JPQL queries in UserRepository, role protection (ADMIN/HR), and full module docs
+- `2026-11-24` | Connected Reports frontend to Spring Boot /api/reports REST API (/departments, /status-distribution, /monthly-joins, /summary) with mock fallback, eliminating full employee table download on page load; removed redundant data source toggle; on-demand CSV export
 

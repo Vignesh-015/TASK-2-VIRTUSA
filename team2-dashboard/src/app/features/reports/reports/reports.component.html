@@ -11,47 +11,19 @@
       </div>
 
       <div class="page-header__actions">
-        <!-- Dataset Selector Switcher -->
-        <div class="dataset-switcher" role="group" aria-label="Dataset Selector">
-          <button type="button"
-                  class="btn btn-sm"
-                  [class.btn-primary]="selectedSource === 'users'"
-                  [class.btn-secondary]="selectedSource !== 'users'"
-                  (click)="setDataSource('users')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <polyline points="17 11 19 13 23 9"></polyline>
-            </svg>
-            Users Dataset
-          </button>
-          <button type="button"
-                  class="btn btn-sm"
-                  [class.btn-primary]="selectedSource === 'employees'"
-                  [class.btn-secondary]="selectedSource !== 'employees'"
-                  (click)="setDataSource('employees')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            Employees Dataset
-          </button>
-        </div>
-
         <!-- Export CSV Button -->
         <button type="button"
                 class="btn btn-outline btn-sm"
                 (click)="exportToCsv()"
-                [disabled]="filteredRecords.length === 0"
+                [disabled]="totalRecords === 0 || isExporting"
                 title="Download filtered report as CSV">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          Export CSV
+          <span *ngIf="!isExporting">Export CSV</span>
+          <span *ngIf="isExporting">Exporting...</span>
         </button>
       </div>
     </div>
@@ -63,7 +35,7 @@
     <p>Loading analytics and workforce records...</p>
   </div>
 
-  <!-- Error Alert -->
+  <!-- Global Error Alert -->
   <div *ngIf="errorMessage && !isLoading" class="alert-box alert-box--error" role="alert">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"></circle>
@@ -163,12 +135,12 @@
         <div class="applied-range-banner">
           <span class="range-status-dot"></span>
           <span *ngIf="!appliedStartDate && !appliedEndDate">
-            Showing <strong>All-Time</strong> data: <strong>{{ totalRecords }}</strong> total {{ selectedSource }}.
+            Showing <strong>All-Time</strong> data: <strong>{{ totalRecords }}</strong> total records.
           </span>
           <span *ngIf="appliedStartDate || appliedEndDate">
             Active Filter:
             <strong>{{ appliedStartDate || 'Beginning' }}</strong> to <strong>{{ appliedEndDate || 'Present' }}</strong>
-            &bull; Matches <strong>{{ totalRecords }}</strong> {{ selectedSource }}.
+            &bull; Matches <strong>{{ totalRecords }}</strong> records.
           </span>
         </div>
       </div>
@@ -184,7 +156,7 @@
           </svg>
         </div>
         <div class="kpi-content">
-          <span class="kpi-label">Total {{ selectedSource === 'users' ? 'Users' : 'Employees' }}</span>
+          <span class="kpi-label">Total Workforce</span>
           <span class="kpi-value">{{ totalRecords }}</span>
           <span class="kpi-sub">Within selected date range</span>
         </div>
@@ -249,8 +221,13 @@
         </div>
 
         <div class="card-body chart-card__body">
+          <!-- Error Alert for Department Chart -->
+          <div *ngIf="departmentError" class="alert-box alert-box--error" role="alert" style="margin-bottom: var(--space-3);">
+            <span>{{ departmentError }}</span>
+          </div>
+
           <!-- Empty State -->
-          <div *ngIf="departmentData.length === 0" class="chart-empty-state">
+          <div *ngIf="departmentData.length === 0 && !departmentError" class="chart-empty-state">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -259,7 +236,7 @@
           </div>
 
           <!-- Horizontal Bar Chart -->
-          <div *ngIf="departmentData.length > 0" class="department-bars-container">
+          <div *ngIf="departmentData.length > 0 && !departmentError" class="department-bars-container">
             <div *ngFor="let item of departmentData" class="dept-bar-row">
               <div class="dept-bar-label" [title]="item.name">
                 {{ item.name }}
@@ -295,8 +272,13 @@
         </div>
 
         <div class="card-body chart-card__body">
+          <!-- Error Alert for Status Chart -->
+          <div *ngIf="statusError" class="alert-box alert-box--error" role="alert" style="margin-bottom: var(--space-3);">
+            <span>{{ statusError }}</span>
+          </div>
+
           <!-- Empty State -->
-          <div *ngIf="totalRecords === 0" class="chart-empty-state">
+          <div *ngIf="totalRecords === 0 && !statusError" class="chart-empty-state">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -306,7 +288,7 @@
           </div>
 
           <!-- SVG Donut Chart + Legend -->
-          <div *ngIf="totalRecords > 0" class="donut-chart-layout">
+          <div *ngIf="totalRecords > 0 && !statusError" class="donut-chart-layout">
             <div class="donut-svg-wrapper">
               <svg viewBox="0 0 100 100" class="donut-svg" aria-label="Donut Chart">
                 <!-- Background Circle -->
@@ -350,7 +332,7 @@
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-                Statuses derived strictly from models; unverified statuses are never assumed inactive.
+                Statuses derived strictly from database queries; unverified statuses are never assumed inactive.
               </div>
             </div>
           </div>
@@ -370,8 +352,13 @@
       </div>
 
       <div class="card-body chart-card__body">
+        <!-- Error Alert for Monthly Joins Chart -->
+        <div *ngIf="monthlyError" class="alert-box alert-box--error" role="alert" style="margin-bottom: var(--space-3);">
+          <span>{{ monthlyError }}</span>
+        </div>
+
         <!-- Empty State -->
-        <div *ngIf="monthlyJoinsData.length === 0" class="chart-empty-state">
+        <div *ngIf="monthlyJoinsData.length === 0 && !monthlyError" class="chart-empty-state">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -383,7 +370,7 @@
         </div>
 
         <!-- Vertical Columns Chart -->
-        <div *ngIf="monthlyJoinsData.length > 0" class="monthly-chart-container">
+        <div *ngIf="monthlyJoinsData.length > 0 && !monthlyError" class="monthly-chart-container">
           <div class="monthly-bars-track">
             <div *ngFor="let item of monthlyJoinsData" class="monthly-column">
               <!-- Count Tag -->
@@ -403,7 +390,7 @@
           </div>
 
           <div class="chart-x-axis-caption">
-            <span>Historical join periods recorded in {{ selectedSource === 'users' ? 'User accounts (joinedOn)' : 'Employee dossiers (joiningDate)' }}</span>
+            <span>Historical join periods recorded in employee accounts (joinedOn)</span>
           </div>
         </div>
       </div>
@@ -414,7 +401,7 @@
       <div class="card-header table-section__header">
         <div>
           <h2 class="chart-title">Detailed Records ({{ filteredRecords.length }})</h2>
-          <p class="chart-subtitle">Individual records currently included in the analytics calculation</p>
+          <p class="chart-subtitle">Individual records populated upon CSV export or demand</p>
         </div>
 
         <div class="table-header-meta">
@@ -436,7 +423,7 @@
           </thead>
           <tbody>
             <tr *ngIf="pagedRecords.length === 0">
-              <td colspan="6" class="empty-table-row">No records match the applied filter.</td>
+              <td colspan="6" class="empty-table-row">No detailed records loaded. Individual records are populated on CSV export.</td>
             </tr>
             <tr *ngFor="let r of pagedRecords">
               <td class="font-medium text-main">{{ r.name }}</td>

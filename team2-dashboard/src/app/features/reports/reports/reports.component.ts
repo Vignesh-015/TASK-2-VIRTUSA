@@ -1,9 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { UserService } from '../../users/services/user.service';
-import { User as UserModel } from '../../users/models/user.model';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ReportService } from '../../../core/services/report.service';
 import { EmployeeService } from '../../../core/services/employee.service';
-import { Employee } from '../../../core/models/employee.model';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  DepartmentReportItem,
+  MonthlyJoinItem,
+  ReportDateRange,
+  ReportSummaryResponse,
+  StatusReportItem
+} from '../../../core/models/report.model';
+import { Employee } from '../../../core/models/employee.model';
 
 export interface ReportRecord {
   id: string;
@@ -23,7 +31,7 @@ export interface DepartmentChartItem {
 }
 
 export interface StatusChartItem {
-  status: 'ACTIVE' | 'INACTIVE' | 'OTHER';
+  status: string;
   label: string;
   count: number;
   percentage: number;
@@ -32,7 +40,7 @@ export interface StatusChartItem {
   dashOffset: number;
 }
 
-export interface MonthlyJoinItem {
+export interface MonthlyChartItem {
   monthKey: string;   // YYYY-MM
   label: string;      // MMM 'YY
   fullLabel: string;  // Month YYYY
@@ -49,14 +57,12 @@ export class ReportsComponent implements OnInit {
   // State
   public isLoading: boolean = true;
   public errorMessage: string | null = null;
+  public departmentError: string | null = null;
+  public statusError: string | null = null;
+  public monthlyError: string | null = null;
+  public isExporting: boolean = false;
 
-  // Selected Data Source ('users' from UserService or 'employees' from EmployeeService)
-  public selectedSource: 'users' | 'employees' = 'users';
-
-  // Raw unmodified dataset fetched from services (preserves immutability)
-  private rawRecords: ReportRecord[] = [];
-
-  // Filtered dataset currently applied
+  // Filtered dataset for detailed table / CSV export
   public filteredRecords: ReportRecord[] = [];
 
   // Date Filter Inputs
@@ -76,7 +82,7 @@ export class ReportsComponent implements OnInit {
   public otherStatusCount: number = 0;
   public donutCircumference: number = 238.761; // 2 * PI * 38
 
-  public monthlyJoinsData: MonthlyJoinItem[] = [];
+  public monthlyJoinsData: MonthlyChartItem[] = [];
   public maxMonthlyCount: number = 0;
 
   // Summary Metrics
@@ -103,7 +109,7 @@ export class ReportsComponent implements OnInit {
   ];
 
   constructor(
-    private userService: UserService,
+    private reportService: ReportService,
     private employeeService: EmployeeService,
     public authService: AuthService
   ) {}
@@ -113,63 +119,105 @@ export class ReportsComponent implements OnInit {
   }
 
   /**
-   * Switch between Users (User Management module) and Employees (Workforce directory)
-   */
-  public setDataSource(source: 'users' | 'employees'): void {
-    if (this.selectedSource === source) return;
-    this.selectedSource = source;
-    this.currentPage = 1;
-    this.loadData();
-  }
-
-  /**
-   * Loads data from the appropriate existing service without mutating it.
+   * Loads all analytics data from ReportService via database queries.
+   * Eliminates downloading the entire user directory on page load.
    */
   public loadData(): void {
     this.isLoading = true;
     this.errorMessage = null;
+    this.departmentError = null;
+    this.statusError = null;
+    this.monthlyError = null;
 
-    if (this.selectedSource === 'users') {
-      this.userService.getUsers().subscribe({
-        next: (users: UserModel[]) => {
-          this.rawRecords = users.map(u => ({
-            id: u.id,
-            name: u.fullName,
-            email: u.email,
-            department: u.department || 'Unassigned',
-            status: u.status || 'ACTIVE',
-            joinDate: u.joinedOn || '',
-            roleOrDesignation: u.role
-          }));
-          this.applyFilterAndRecalculate();
-          this.isLoading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to load user records from UserService. Please try again.';
-          this.isLoading = false;
+    const range: ReportDateRange = {
+      startDate: this.appliedStartDate,
+      endDate: this.appliedEndDate
+    };
+
+    forkJoin({
+      summary: this.reportService.getSummary(range).pipe(
+        catchError(err => {
+          console.error('Failed to load report summary:', err);
+          return of(null);
+        })
+      ),
+      departments: this.reportService.getDepartmentReport(range).pipe(
+        catchError(err => {
+          console.error('Failed to load department report:', err);
+          this.departmentError = 'Failed to load department distribution.';
+          return of(null);
+        })
+      ),
+      statuses: this.reportService.getStatusReport(range).pipe(
+        catchError(err => {
+          console.error('Failed to load status report:', err);
+          this.statusError = 'Failed to load account status health.';
+          return of(null);
+        })
+      ),
+      monthly: this.reportService.getMonthlyJoins(range).pipe(
+        catchError(err => {
+          console.error('Failed to load monthly joins report:', err);
+          this.monthlyError = 'Failed to load monthly joins trend.';
+          return of(null);
+        })
+      )
+    }).subscribe({
+      next: ({ summary, departments, statuses, monthly }) => {
+        this.isLoading = false;
+
+        // 1. Process KPI Summary
+        if (summary) {
+          this.totalRecords = summary.totalEmployees;
+          this.activeCount = summary.activeEmployees;
+          this.inactiveCount = summary.inactiveEmployees;
+          this.activePercentage = summary.totalEmployees > 0
+            ? Math.round((summary.activeEmployees / summary.totalEmployees) * 100)
+            : 0;
+        } else if (statuses) {
+          const activeItem = statuses.find(s => s.status === 'ACTIVE');
+          const inactiveItem = statuses.find(s => s.status === 'INACTIVE');
+          this.activeCount = activeItem ? activeItem.count : 0;
+          this.inactiveCount = inactiveItem ? inactiveItem.count : 0;
+          this.totalRecords = statuses.reduce((acc, curr) => acc + curr.count, 0);
+          this.activePercentage = this.totalRecords > 0
+            ? Math.round((this.activeCount / this.totalRecords) * 100)
+            : 0;
         }
-      });
-    } else {
-      this.employeeService.getAllEmployees().subscribe({
-        next: (employees: Employee[]) => {
-          this.rawRecords = employees.map(e => ({
-            id: e.id,
-            name: e.fullName,
-            email: e.email,
-            department: e.department || 'Unassigned',
-            status: e.status || 'ACTIVE',
-            joinDate: e.joiningDate || '',
-            roleOrDesignation: e.designation
+
+        // 2. Process Department Distribution
+        if (departments) {
+          this.totalDepartments = departments.length;
+          this.departmentData = departments.map((d, index) => ({
+            name: d.department,
+            count: d.headcount,
+            percentage: d.percentage,
+            color: this.departmentPalette[index % this.departmentPalette.length]
           }));
-          this.applyFilterAndRecalculate();
-          this.isLoading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to load employee records from EmployeeService. Please try again.';
-          this.isLoading = false;
+          this.maxDepartmentCount = this.departmentData.length > 0
+            ? Math.max(1, ...this.departmentData.map(d => d.count))
+            : 1;
         }
-      });
-    }
+
+        // 3. Process Status Distribution
+        if (statuses) {
+          this.buildStatusChart(statuses);
+        }
+
+        // 4. Process Monthly Joins Trend
+        if (monthly) {
+          this.buildMonthlyJoinsChart(monthly);
+        }
+
+        if (!summary && !departments && !statuses && !monthly) {
+          this.errorMessage = 'Failed to load analytics records. Please try again.';
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage = 'An unexpected error occurred while loading reports.';
+      }
+    });
   }
 
   /**
@@ -187,7 +235,7 @@ export class ReportsComponent implements OnInit {
     this.appliedEndDate = this.endDate.trim() ? this.endDate.trim() : null;
     this.currentPage = 1;
 
-    this.applyFilterAndRecalculate();
+    this.loadData();
   }
 
   /**
@@ -201,7 +249,7 @@ export class ReportsComponent implements OnInit {
     this.dateError = null;
     this.currentPage = 1;
 
-    this.applyFilterAndRecalculate();
+    this.loadData();
   }
 
   /**
@@ -231,159 +279,48 @@ export class ReportsComponent implements OnInit {
   }
 
   /**
-   * Filters the raw immutable dataset and generates all three visualisations.
+   * Builds Active vs Inactive Donut Chart data for all four statuses.
    */
-  private applyFilterAndRecalculate(): void {
-    // 1. Date Filtering
-    this.filteredRecords = this.rawRecords.filter(item => {
-      if (!item.joinDate) return true;
-
-      if (this.appliedStartDate && item.joinDate < this.appliedStartDate) {
-        return false;
-      }
-      if (this.appliedEndDate && item.joinDate > this.appliedEndDate) {
-        return false;
-      }
-      return true;
-    });
-
-    this.totalRecords = this.filteredRecords.length;
-
-    // 2. Build Chart A: Users by Department
-    this.buildDepartmentChart();
-
-    // 3. Build Chart B: Active vs Inactive Users
-    this.buildStatusChart();
-
-    // 4. Build Chart C: Monthly Joins
-    this.buildMonthlyJoinsChart();
-  }
-
-  /**
-   * Builds the Department distribution data
-   */
-  private buildDepartmentChart(): void {
-    const deptMap: { [name: string]: number } = {};
-
-    for (const record of this.filteredRecords) {
-      const dept = record.department || 'Unassigned';
-      deptMap[dept] = (deptMap[dept] || 0) + 1;
-    }
-
-    const deptKeys = Object.keys(deptMap);
-    this.totalDepartments = deptKeys.length;
-
-    const list: DepartmentChartItem[] = deptKeys.map((name, index) => {
-      const count = deptMap[name];
-      const percentage = this.totalRecords > 0 ? (count / this.totalRecords) * 100 : 0;
-      const color = this.departmentPalette[index % this.departmentPalette.length];
-      return { name, count, percentage, color };
-    });
-
-    // Sort descending by count, then name
-    list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-    this.departmentData = list;
-    this.maxDepartmentCount = list.length > 0 ? Math.max(...list.map(d => d.count)) : 1;
-  }
-
-  /**
-   * Builds Active vs Inactive Donut Chart data.
-   * Requirement: Do not silently treat missing statuses as inactive.
-   */
-  private buildStatusChart(): void {
-    this.activeCount = 0;
-    this.inactiveCount = 0;
-    this.otherStatusCount = 0;
-
-    for (const record of this.filteredRecords) {
-      const rawStatus = (record.status || '').toUpperCase().trim();
-      if (rawStatus === 'ACTIVE') {
-        this.activeCount++;
-      } else if (rawStatus === 'INACTIVE') {
-        this.inactiveCount++;
-      } else {
-        // Explicitly handle other statuses (e.g. ONBOARDING, ON_LEAVE, or unspecified)
-        this.otherStatusCount++;
-      }
-    }
+  private buildStatusChart(statuses: StatusReportItem[]): void {
+    const statusConfig: { [key: string]: { label: string; color: string } } = {
+      ACTIVE: { label: 'Active Users', color: '#059669' },
+      ONBOARDING: { label: 'Onboarding', color: '#2563EB' },
+      ON_LEAVE: { label: 'On Leave', color: '#D97706' },
+      INACTIVE: { label: 'Inactive Users', color: '#DC2626' }
+    };
 
     const total = this.totalRecords;
-    this.activePercentage = total > 0 ? Math.round((this.activeCount / total) * 100) : 0;
-    const inactivePercentage = total > 0 ? Math.round((this.inactiveCount / total) * 100) : 0;
-    const otherPercentage = total > 0 ? Math.round((this.otherStatusCount / total) * 100) : 0;
-
-    const items: StatusChartItem[] = [];
     const C = this.donutCircumference;
     let accumulatedOffset = 0;
+    const items: StatusChartItem[] = [];
 
-    // Segment 1: Active
-    if (this.activeCount > 0) {
-      const pct = this.activeCount / total;
+    for (const s of statuses) {
+      const cfg = statusConfig[s.status] || { label: s.status, color: '#64748B' };
+      const pct = total > 0 ? s.count / total : 0;
       const dash = pct * C;
+
       items.push({
-        status: 'ACTIVE',
-        label: 'Active Users',
-        count: this.activeCount,
-        percentage: this.activePercentage,
-        color: '#059669', // var(--color-success)
+        status: s.status,
+        label: cfg.label,
+        count: s.count,
+        percentage: Math.round(s.percentage),
+        color: cfg.color,
         dashArray: `${dash} ${C}`,
         dashOffset: accumulatedOffset
       });
-      accumulatedOffset -= dash;
-    }
 
-    // Segment 2: Inactive
-    if (this.inactiveCount > 0) {
-      const pct = this.inactiveCount / total;
-      const dash = pct * C;
-      items.push({
-        status: 'INACTIVE',
-        label: 'Inactive Users',
-        count: this.inactiveCount,
-        percentage: inactivePercentage,
-        color: '#DC2626', // var(--color-danger)
-        dashArray: `${dash} ${C}`,
-        dashOffset: accumulatedOffset
-      });
-      accumulatedOffset -= dash;
-    }
-
-    // Segment 3: Other / Non-Inactive
-    if (this.otherStatusCount > 0) {
-      const pct = this.otherStatusCount / total;
-      const dash = pct * C;
-      items.push({
-        status: 'OTHER',
-        label: 'On Leave / Onboarding',
-        count: this.otherStatusCount,
-        percentage: otherPercentage,
-        color: '#D97706', // var(--color-warning)
-        dashArray: `${dash} ${C}`,
-        dashOffset: accumulatedOffset
-      });
+      if (dash > 0) {
+        accumulatedOffset -= dash;
+      }
     }
 
     this.statusData = items;
   }
 
   /**
-   * Builds Monthly Joins distribution chronologically.
+   * Builds Monthly Joins distribution chronologically from yyyy-MM backend data.
    */
-  private buildMonthlyJoinsChart(): void {
-    const monthCounts: { [key: string]: number } = {};
-
-    for (const record of this.filteredRecords) {
-      if (!record.joinDate) continue;
-      // Expecting YYYY-MM-DD
-      const parts = record.joinDate.split('-');
-      if (parts.length >= 2) {
-        const key = `${parts[0]}-${parts[1]}`; // e.g. "2023-04"
-        monthCounts[key] = (monthCounts[key] || 0) + 1;
-      }
-    }
-
-    const sortedKeys = Object.keys(monthCounts).sort();
-
+  private buildMonthlyJoinsChart(joins: MonthlyJoinItem[]): void {
     const monthNames = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -393,63 +330,95 @@ export class ReportsComponent implements OnInit {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    const result: MonthlyJoinItem[] = sortedKeys.map(key => {
-      const [yearStr, monthStr] = key.split('-');
-      const year = parseInt(yearStr, 10);
-      const monthIdx = parseInt(monthStr, 10) - 1;
-      const count = monthCounts[key];
-
-      const label = `${monthNames[monthIdx]} '${year.toString().slice(-2)}`;
-      const fullLabel = `${fullMonthNames[monthIdx]} ${year}`;
-
-      return {
-        monthKey: key,
-        label,
-        fullLabel,
-        count,
-        barHeightPercent: 0 // calculated next
-      };
-    });
-
-    const maxCount = result.length > 0 ? Math.max(...result.map(m => m.count)) : 1;
+    const maxCount = joins.length > 0 ? Math.max(1, ...joins.map(j => j.count)) : 1;
     this.maxMonthlyCount = maxCount;
 
-    for (const item of result) {
-      item.barHeightPercent = Math.max(12, Math.round((item.count / maxCount) * 100));
-    }
+    this.monthlyJoinsData = joins.map(j => {
+      const parts = j.month.split('-');
+      const year = parseInt(parts[0], 10);
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const label = (monthIdx >= 0 && monthIdx < 12)
+        ? `${monthNames[monthIdx]} '${year.toString().slice(-2)}`
+        : j.month;
+      const fullLabel = (monthIdx >= 0 && monthIdx < 12)
+        ? `${fullMonthNames[monthIdx]} ${year}`
+        : j.month;
+      const barHeightPercent = j.count > 0 ? Math.max(12, Math.round((j.count / maxCount) * 100)) : 0;
 
-    this.monthlyJoinsData = result;
+      return {
+        monthKey: j.month,
+        label,
+        fullLabel,
+        count: j.count,
+        barHeightPercent
+      };
+    });
   }
 
   /**
-   * Export currently filtered data to CSV file
+   * Export currently filtered data to CSV file.
+   * Fetches employee records on demand from EmployeeService only when clicked, never on page load.
    */
   public exportToCsv(): void {
-    if (this.filteredRecords.length === 0) return;
+    if (this.isExporting) return;
+    this.isExporting = true;
 
-    const headers = ['ID', 'Name', 'Email', 'Department', 'Role / Designation', 'Status', 'Joined Date'];
-    const rows = this.filteredRecords.map(r => [
-      `"${r.id}"`,
-      `"${r.name.replace(/"/g, '""')}"`,
-      `"${r.email}"`,
-      `"${r.department.replace(/"/g, '""')}"`,
-      `"${r.roleOrDesignation}"`,
-      `"${r.status}"`,
-      `"${r.joinDate}"`
-    ]);
+    this.employeeService.getAllEmployees().subscribe({
+      next: (employees: Employee[]) => {
+        let filtered = employees;
+        if (this.appliedStartDate || this.appliedEndDate) {
+          filtered = employees.filter(e => {
+            const join = e.joiningDate || '';
+            if (this.appliedStartDate && join < this.appliedStartDate) return false;
+            if (this.appliedEndDate && join > this.appliedEndDate) return false;
+            return true;
+          });
+        }
 
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+        this.filteredRecords = filtered.map(e => ({
+          id: e.id,
+          name: e.fullName,
+          email: e.email,
+          department: e.department || 'Unassigned',
+          status: e.status || 'ACTIVE',
+          joinDate: e.joiningDate || '',
+          roleOrDesignation: e.designation
+        }));
 
-    const timestamp = new Date().toISOString().slice(0, 10);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${this.selectedSource}-analytics-report-${timestamp}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+        if (this.filteredRecords.length === 0) {
+          this.isExporting = false;
+          return;
+        }
+
+        const headers = ['ID', 'Name', 'Email', 'Department', 'Role / Designation', 'Status', 'Joined Date'];
+        const rows = this.filteredRecords.map(r => [
+          `"${r.id}"`,
+          `"${(r.name || '').replace(/"/g, '""')}"`,
+          `"${r.email || ''}"`,
+          `"${(r.department || '').replace(/"/g, '""')}"`,
+          `"${r.roleOrDesignation || ''}"`,
+          `"${r.status || ''}"`,
+          `"${r.joinDate || ''}"`
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `workforce-analytics-report-${timestamp}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        this.isExporting = false;
+      },
+      error: () => {
+        this.isExporting = false;
+      }
+    });
   }
 
   // Table Pagination Helpers
