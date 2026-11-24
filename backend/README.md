@@ -133,6 +133,22 @@ Base path: `http://localhost:8080/api/departments`
 | `PUT` | `/departments/{id}` | Update department and cascade rename to users (Admin/HR) | `DepartmentRequest` | `200 OK` (`400` validation, `409` duplicate) |
 | `DELETE` | `/departments/{id}` | Delete empty department (Admin only; blocked if staff assigned) | None | `204 No Content` (`409` if has employees) |
 
+## Dashboard Module (`com.sec.team2.ems.dashboard`)
+
+The Dashboard module provides high-level workforce analytics, department headcount allocations, employment status distributions, and recent employee additions. All numbers are computed from database count queries, ensuring minimal network overhead and strong access security.
+
+Detailed architecture and design documentation is available at [docs/DASHBOARD_MODULE.md](docs/DASHBOARD_MODULE.md).
+
+### Dashboard REST Endpoints
+
+Base path: `http://localhost:8080/api/dashboard`
+
+| Method | Endpoint | Description | Request Body | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/dashboard/stats` | Workforce statistics, status counts, new joiners, and active percentage | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/dashboard/departments` | Headcount and percentage allocation per department (includes 0-staff units) | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/dashboard/recent` | Recent employee additions ordered by join date desc, id desc (default limit 5) | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+
 ## Package Structure & Module Owners
 
 Base package: `com.sec.team2.ems`

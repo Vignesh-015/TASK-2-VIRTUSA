@@ -1,12 +1,14 @@
 package com.sec.team2.ems.user;
 
 import com.sec.team2.ems.common.Role;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +38,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<String> findAllEmployeeCodes();
 
     long countByDepartmentIgnoreCase(String department);
+
+    long countByStatus(UserStatus status);
+
+    long countByJoinedOnBetween(LocalDate from, LocalDate to);
+
+    @Query("SELECT u.department, COUNT(u) FROM User u GROUP BY u.department")
+    List<Object[]> countEmployeesByDepartmentGrouped();
+
+    List<User> findAllByOrderByJoinedOnDescIdDesc(Pageable pageable);
 
     @Modifying
     @Query("UPDATE User u SET u.department = :newName WHERE LOWER(u.department) = LOWER(:oldName)")
