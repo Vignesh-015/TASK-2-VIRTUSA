@@ -69,6 +69,8 @@ const routes: Routes = [
       },
       {
         path: 'users',
+        canMatch: [roleMatchGuard],
+        data: { roles: ['ADMIN', 'HR'] },
         loadChildren: () =>
           import('./features/users/users.module').then(m => m.UsersModule)
       },

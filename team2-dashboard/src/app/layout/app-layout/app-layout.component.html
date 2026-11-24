@@ -81,8 +81,8 @@
           </a>
         </li>
 
-        <!-- Users: Visible to all authenticated roles (read-only for non-admin) -->
-        <li>
+        <!-- Users: Visible strictly to ADMIN & HR only -->
+        <li *ngIf="authService.hasRole(['ADMIN', 'HR'])">
           <a routerLink="/users" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
             <span class="nav-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

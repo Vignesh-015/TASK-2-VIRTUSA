@@ -547,7 +547,7 @@ export class EmployeeService {
     private authService: AuthService
   ) {
     this.syncDepartmentCounts();
-    if (!this.useMock) {
+    if (!this.useMock && this.authService.hasRole(['ADMIN', 'HR'])) {
       this.refreshFromApi();
     }
   }
@@ -692,7 +692,7 @@ export class EmployeeService {
   }
 
   public getEmployees(filter?: EmployeeFilter): Observable<{ data: Employee[]; total: number; page: number; pageSize: number }> {
-    if (!this.useMock) {
+    if (!this.useMock && this.authService.hasRole(['ADMIN', 'HR'])) {
       return this.http.get<any[]>(this.apiUrl).pipe(
         map(users => users.map(u => this.mapUserResponseToEmployee(u))),
         tap(list => {
@@ -707,7 +707,7 @@ export class EmployeeService {
   }
 
   public getAllEmployees(): Observable<Employee[]> {
-    if (!this.useMock) {
+    if (!this.useMock && this.authService.hasRole(['ADMIN', 'HR'])) {
       return this.http.get<any[]>(this.apiUrl).pipe(
         map(users => users.map(u => this.mapUserResponseToEmployee(u))),
         tap(list => {
@@ -721,7 +721,7 @@ export class EmployeeService {
   }
 
   public getEmployeeById(id: string): Observable<Employee | undefined> {
-    if (!this.useMock) {
+    if (!this.useMock && this.authService.hasRole(['ADMIN', 'HR'])) {
       return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
         map(u => this.mapUserResponseToEmployee(u))
       );

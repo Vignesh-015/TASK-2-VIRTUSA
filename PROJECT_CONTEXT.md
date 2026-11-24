@@ -75,8 +75,8 @@ Defined in `team2-dashboard/src/app/app-routing.module.ts` and feature `*-routin
 | `/dashboard` | `DashboardModule` -> `DashboardHomeComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR`, `EMPLOYEE` | Renders role-specific view |
 | `/employees` | `EmployeesModule` -> `EmployeeListComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR` | Table + grid + modals |
 | `/departments` | `DepartmentsModule` -> `DepartmentListComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR` | Card grid + modals |
-| `/users` | `UsersModule` -> `UserListComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | `ADMIN`, `HR` (in component) | Redirects `EMPLOYEE` to `/forbidden` in `ngOnInit` |
-| `/users/new`, `/users/:id/edit` | `UsersModule` -> `UserFormComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | `ADMIN`, `HR` (in component) | Redirects `EMPLOYEE` to `/forbidden` in `ngOnInit` |
+| `/users` | `UsersModule` -> `UserListComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR` | Route protected by `roleMatchGuard` (`['ADMIN', 'HR']`); hidden from sidebar for `EMPLOYEE` |
+| `/users/new`, `/users/:id/edit` | `UsersModule` -> `UserFormComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard`, `roleMatchGuard` | `ADMIN`, `HR` | Nested under `/users`; protected by parent `roleMatchGuard` |
 | `/profile` | `ProfileModule` -> `ProfileComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | All authenticated | Self-service profile |
 | `/forbidden` | `ForbiddenComponent` | `AppLayoutComponent` | `authGuard`, `authChildGuard` | All authenticated | 403 page |
 | `/not-found`, `**` | `NotFoundComponent` | None | None | Any | 404 page |
@@ -207,7 +207,7 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - **Conflicting `User` Models & Departments:** `core/models/user.model.ts` (`name`, `joinDate`, 4 statuses) vs `features/users/models/user.model.ts` (`fullName`, `joinedOn`, 2 statuses); `DepartmentService` (6 corporate names) vs `USER_DEPARTMENTS` (6 short names).
 - **Dashboard Unused Code:** `DashboardHomeComponent` connects directly to `DashboardService` calling the Spring Boot backend `/api/dashboard/*` endpoints for Admin/HR metrics without downloading the full user directory on page load. `SummaryStripComponent`, `DepartmentListComponent`, and `ActivityTimelineComponent` inside `features/dashboard/components/` remain declared in `DashboardModule` for backward compatibility but are not rendered in `dashboard-home.component.html`.
 - **Style Inconsistencies:** `styles.scss` uses `--color-primary-blue: #2563EB` and imports Google Fonts `DM Sans`/`Inter`, whereas `styles/_variables.scss` defines older tokens (`$color-bg: #F6F4EF`, `$color-accent: #2457A6`). `reports.component.scss` references undefined variables `--text-sm` and `--color-text`. `styles.scss` uses `--radius-full` (`9999px`) on `.badge` and `app-layout` profile button.
-- **Routing / Guard Gaps:** `/users` routes rely on component-level `users.permissions.ts` redirects (`// replace with route guard in guards task`) instead of `roleMatchGuard`. `ReportsModule` and `RegisterComponent` are unrouted. `NotFoundComponent.goHome()` links to `['/auth/login']` (which redirects to `/login`).
+- **Routing / Guard Gaps:** `/users` route is now protected by `roleMatchGuard` (`['ADMIN', 'HR']`), and the Users sidebar link is visible only to `ADMIN` and `HR`. `NotFoundComponent.goHome()` links to `['/auth/login']` (which redirects to `/login`).
 - **Mock Flag Split:** `AuthService` and `DashboardService` use `environment.useMockApi`, while `UserService` uses its own `private readonly useMock = true`, and `EmployeeService`/`DepartmentService` have no HTTP mode.
 
 ---
@@ -242,4 +242,5 @@ Base URL from `environment.ts`: `http://localhost:8080/api`. The `/api/users` en
 - `2026-11-23` | Connected Admin/HR Dashboard frontend to Spring Boot /api/dashboard REST API (/stats, /departments, /recent) with mock fallback, eliminating full employee table download on dashboard load; preserved Employee workspace view
 - `2026-11-24` | Implemented Reports & Analytics backend in `com.sec.team2.ems.report` (GET `/api/reports/departments`, `/status-distribution`, `/monthly-joins`, `/summary`) with joinedOn date filtering, JPQL queries in UserRepository, role protection (ADMIN/HR), and full module docs
 - `2026-11-24` | Connected Reports frontend to Spring Boot /api/reports REST API (/departments, /status-distribution, /monthly-joins, /summary) with mock fallback, eliminating full employee table download on page load; removed redundant data source toggle; on-demand CSV export
+- `2026-11-24` | Restricted GET /api/users and GET /api/users/{id} to ADMIN and HR via @PreAuthorize; protected /users route with roleMatchGuard; guarded EmployeeService user reads for EMPLOYEE role; aligned sidebar navigation; added SECURITY_MATRIX.md documentation
 

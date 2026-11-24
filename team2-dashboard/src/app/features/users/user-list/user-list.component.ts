@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepartmentService } from '../../../core/services/department.service';
 import { USER_DEPARTMENTS, User, UserNotice } from '../models/user.model';
@@ -37,8 +36,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   constructor(
     private userService: UserService,
     private departmentService: DepartmentService,
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   public get canView(): boolean {
@@ -83,12 +81,6 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // replace with route guard in guards task
-    if (!this.canView) {
-      this.router.navigate(['/forbidden']);
-      return;
-    }
-
     const pendingNotice = this.userService.consumeNotice();
     if (pendingNotice) {
       this.showNotice(pendingNotice.message, pendingNotice.type);
