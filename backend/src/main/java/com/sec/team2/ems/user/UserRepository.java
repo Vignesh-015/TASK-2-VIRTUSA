@@ -48,6 +48,42 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findAllByOrderByJoinedOnDescIdDesc(Pageable pageable);
 
+    @Query("SELECT COUNT(u) FROM User u " +
+           "WHERE (:startDate IS NULL OR u.joinedOn >= :startDate) " +
+           "AND (:endDate IS NULL OR u.joinedOn <= :endDate)")
+    long countEmployeesBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT u.department, COUNT(u) FROM User u " +
+           "WHERE (:startDate IS NULL OR u.joinedOn >= :startDate) " +
+           "AND (:endDate IS NULL OR u.joinedOn <= :endDate) " +
+           "GROUP BY u.department")
+    List<Object[]> countEmployeesByDepartmentGroupedBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT u.status, COUNT(u) FROM User u " +
+           "WHERE (:startDate IS NULL OR u.joinedOn >= :startDate) " +
+           "AND (:endDate IS NULL OR u.joinedOn <= :endDate) " +
+           "GROUP BY u.status")
+    List<Object[]> countEmployeesByStatusGroupedBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT YEAR(u.joinedOn), MONTH(u.joinedOn), COUNT(u) FROM User u " +
+           "WHERE (:startDate IS NULL OR u.joinedOn >= :startDate) " +
+           "AND (:endDate IS NULL OR u.joinedOn <= :endDate) " +
+           "GROUP BY YEAR(u.joinedOn), MONTH(u.joinedOn) " +
+           "ORDER BY YEAR(u.joinedOn) ASC, MONTH(u.joinedOn) ASC")
+    List<Object[]> countMonthlyJoinsBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
     @Modifying
     @Query("UPDATE User u SET u.department = :newName WHERE LOWER(u.department) = LOWER(:oldName)")
     int updateDepartmentName(@Param("oldName") String oldName, @Param("newName") String newName);

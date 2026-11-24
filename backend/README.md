@@ -149,6 +149,23 @@ Base path: `http://localhost:8080/api/dashboard`
 | `GET` | `/dashboard/departments` | Headcount and percentage allocation per department (includes 0-staff units) | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
 | `GET` | `/dashboard/recent` | Recent employee additions ordered by join date desc, id desc (default limit 5) | None | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
 
+## Reports & Analytics Module (`com.sec.team2.ems.report`)
+
+The Reports & Analytics module provides workforce distribution charts, status health metrics, chronological monthly hiring volume, and KPI summaries. All calculations are executed via database queries with optional `joinedOn` date range filters (`startDate` and `endDate`).
+
+Detailed architecture and design documentation is available at [docs/REPORT_MODULE.md](docs/REPORT_MODULE.md).
+
+### Reports REST Endpoints
+
+Base path: `http://localhost:8080/api/reports`
+
+| Method | Endpoint | Description | Query Params | Response Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/reports/departments` | Department headcount and allocation percentage (includes 0-staff depts) | `startDate`, `endDate` | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/reports/status-distribution` | Account status counts across all four statuses in fixed order | `startDate`, `endDate` | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/reports/monthly-joins` | Chronological monthly join volume with zero-fill (max 60 months) | `startDate`, `endDate` | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+| `GET` | `/reports/summary` | Executive KPI summary metrics for the filtered workforce | `startDate`, `endDate` | `200 OK` (`403` for `EMPLOYEE`, `401` unauthenticated) |
+
 ## Package Structure & Module Owners
 
 Base package: `com.sec.team2.ems`
